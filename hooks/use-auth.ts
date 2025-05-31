@@ -1,0 +1,112 @@
+import { authService } from "@/services";
+import {
+  IUser,
+  TChangePasswordInput,
+  TLoginInput,
+  TPasswordResetInput,
+  TRegisterInput,
+  TUpdateAuthUserInput,
+} from "@/types";
+import { deleteToken, getToken } from "@/utils";
+import { useEffect } from "react";
+import { useMutation, useQuery } from "react-query";
+import { atom, useAtom } from "jotai";
+import { accessTokenStore, userStore } from "@/stores";
+
+const isFetchingStore = atom<boolean>(true);
+
+export const useAuth = () => {
+  const [accessToken, setAccessToken] = useAtom(accessTokenStore);
+  const [user, setUser] = useAtom(userStore);
+  const [isFetching, setIsFetching] = useAtom(isFetchingStore);
+
+  useQuery<IUser, Error>(
+    ["getUser", accessToken],
+    () => authService.getUser(),
+    {
+      enabled: !user && !!accessToken, // Only fetch when accessToken exists
+      onSuccess: setUser,
+      onError: async (err) => {
+        await deleteToken();
+        setIsFetching(false);
+      },
+      retry: 0,
+      staleTime: 5000,
+    }
+  );
+
+  const { mutate: register, isLoading: isRegistering } = useMutation<
+    IUser,
+    Error,
+    TRegisterInput
+  >(async (input: TRegisterInput) => {
+    const result = await authService.register(input);
+    return result;
+  });
+
+  const { mutate: login, isLoading: isLoggingIn } = useMutation<
+    { accessToken: string; user: IUser },
+    Error,
+    TLoginInput
+  >((input: TLoginInput) => authService.login(input));
+
+  const { mutate: passwordReset, isLoading: isPasswordResetting } = useMutation<
+    void,
+    Error,
+    TPasswordResetInput
+  >((input: TPasswordResetInput) => authService.passwordReset(input));
+
+  const { mutate: updateUser, isLoading: isUpdatingAuthUser } = useMutation<
+    IUser,
+    Error,
+    TUpdateAuthUserInput
+  >((input: TUpdateAuthUserInput) => authService.updateUser(input));
+
+  const { mutate: changePassword, isLoading: isPasswordChanging } = useMutation<
+    void,
+    Error,
+    TChangePasswordInput
+  >((input: TChangePasswordInput) => authService.changePassword(input));
+
+  const logout = () => {
+    setAccessToken(undefined);
+    setUser(undefined);
+    deleteToken();
+  };
+
+  useEffect(() => {
+    if (accessToken) {
+      return;
+    }
+
+    getToken().then((accessToken) => {
+      if (!accessToken) {
+        setIsFetching(false);
+      }
+      setAccessToken(accessToken ?? undefined);
+    });
+  }, [accessToken]);
+
+  const isLoading =
+    isLoggingIn ||
+    isRegistering ||
+    isPasswordResetting ||
+    isPasswordChanging ||
+    isUpdatingAuthUser;
+
+  if (user && isFetching) {
+    setIsFetching(false);
+  }
+
+  return {
+    user,
+    isFetching,
+    isLoading,
+    register,
+    login,
+    updateUser,
+    passwordReset,
+    changePassword,
+    logout,
+  };
+};
