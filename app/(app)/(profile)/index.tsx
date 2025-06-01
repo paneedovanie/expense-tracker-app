@@ -29,13 +29,6 @@ export default function ProfileScreen() {
       >
         Update Profile
       </Button>
-      <Button
-        style={styles.changePasswordButton}
-        appearance="outline"
-        onPress={() => router.push("/(app)/(profile)/change-password")}
-      >
-        Change Password
-      </Button>
       <Divider style={styles.divider} />
       <Button style={styles.logoutButton} status="danger" onPress={logout}>
         Logout

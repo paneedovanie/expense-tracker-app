@@ -8,6 +8,8 @@ import ReactQueryProvider from "@/components/providers/ReactQueryProvider";
 import { useAuth, useProtectedRoute } from "@/hooks";
 import { EvaIconsPack } from "@ui-kitten/eva-icons";
 import { ToastProvider } from "@/components/providers/ToastProvider";
+import * as Linking from "expo-linking";
+import { apiBaseUrl } from "@/constants/env";
 
 export {
   // Catch any errors thrown by the Layout component.
@@ -46,6 +48,17 @@ const Content = () => {
 };
 
 export default function RootLayout() {
+  const url = Linking.useURL();
+
+  console.log("apiBaseUrl", apiBaseUrl);
+
+  useEffect(() => {
+    if (url) {
+      console.log("App opened with URL:", url);
+      // You can do additional logic here, like analytics or specific data fetching
+    }
+  }, [url]);
+
   return (
     <>
       <ApplicationProvider {...eva} theme={eva.light}>

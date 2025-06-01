@@ -12,10 +12,13 @@ import { useEffect } from "react";
 import { useMutation, useQuery } from "react-query";
 import { atom, useAtom } from "jotai";
 import { accessTokenStore, userStore } from "@/stores";
+import { useLocalSearchParams } from "expo-router";
 
 const isFetchingStore = atom<boolean>(true);
 
 export const useAuth = () => {
+  const searchParams = useLocalSearchParams();
+  const accessTokenParam = searchParams.accessToken as string;
   const [accessToken, setAccessToken] = useAtom(accessTokenStore);
   const [user, setUser] = useAtom(userStore);
   const [isFetching, setIsFetching] = useAtom(isFetchingStore);
@@ -45,7 +48,7 @@ export const useAuth = () => {
   });
 
   const { mutate: login, isLoading: isLoggingIn } = useMutation<
-    { accessToken: string; user: IUser },
+    void,
     Error,
     TLoginInput
   >((input: TLoginInput) => authService.login(input));
@@ -75,17 +78,26 @@ export const useAuth = () => {
   };
 
   useEffect(() => {
+    // If accessTokenParam exists and is different from current accessToken, update it
+    if (accessTokenParam && accessToken !== accessTokenParam) {
+      setAccessToken(accessTokenParam);
+      return;
+    }
+
+    // If accessToken is already set, do nothing
     if (accessToken) {
       return;
     }
 
-    getToken().then((accessToken) => {
-      if (!accessToken) {
+    // Otherwise, try to get token from storage
+    getToken().then((storedToken) => {
+      if (storedToken) {
+        setAccessToken(storedToken);
+      } else {
         setIsFetching(false);
       }
-      setAccessToken(accessToken ?? undefined);
     });
-  }, [accessToken]);
+  }, [accessTokenParam, setAccessToken, setIsFetching]);
 
   const isLoading =
     isLoggingIn ||

@@ -1,5 +1,4 @@
 import { apiBaseUrl } from "@/constants/env";
-import { accessTokenStore } from "@/stores";
 import {
   IUser,
   TChangePasswordInput,
@@ -39,10 +38,7 @@ class AuthService extends BaseService {
   }
 
   async login(input: TLoginInput) {
-    return api.post<{ accessToken: string; user: IUser }>(
-      `${apiBaseUrl}/api/v1/auth/login`,
-      input
-    );
+    return api.post<void>(`${apiBaseUrl}/api/v1/auth/login`, input);
   }
 
   async passwordReset(input: TPasswordResetInput) {

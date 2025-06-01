@@ -1,5 +1,5 @@
 import { Layout, Text, Button, Spinner } from "@ui-kitten/components";
-import { Href, Link, useRouter } from "expo-router";
+import { Href, useRouter } from "expo-router";
 import { StyleSheet, View } from "react-native";
 import { FormProvider, useForm } from "react-hook-form";
 import InputField from "@/components/forms/InputField";
@@ -7,7 +7,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { TLoginInput } from "@/types";
 import { LoginValidation } from "@/validations";
 import { useAuth } from "@/hooks";
-import { saveToken } from "@/utils";
 import { useToast } from "@/components/providers/ToastProvider";
 
 export default function LoginScreen() {
@@ -21,12 +20,11 @@ export default function LoginScreen() {
 
   const submit = (input: TLoginInput) => {
     login(input, {
-      onSuccess: ({ accessToken }) => {
-        saveToken(accessToken);
-        router.push("/(app)/(groups)");
+      onSuccess: () => {
+        form.reset();
         toast.showToast({
           status: "success",
-          message: "Logged in successfully",
+          message: "Logged in successfully. Check your email to login.",
         });
       },
     });
@@ -53,18 +51,6 @@ export default function LoginScreen() {
             autoCapitalize="none"
             keyboardType="email-address"
           />
-          <InputField
-            label="Password *"
-            name="password"
-            placeholder="Enter your password"
-            textContentType="password"
-            secureTextEntry
-            disabled={isLoading}
-            accessibilityLabel="Password input"
-          />
-          <View style={styles.forgotPassword}>
-            <Link href={"/forgot-password" as Href}>Forgot your password?</Link>
-          </View>
           <Button
             onPress={form.handleSubmit(submit)}
             disabled={isLoading}

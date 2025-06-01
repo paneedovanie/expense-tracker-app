@@ -31,8 +31,7 @@ export default function RegisterScreen() {
         router.push("/(auth)");
         toast.showToast({
           status: "success",
-          message:
-            "Registration successfully. Check your email for the password.",
+          message: "Registration successfully. Check your email to login.",
         });
       },
     });
