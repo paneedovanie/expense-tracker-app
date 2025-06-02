@@ -1,4 +1,6 @@
 import Avatar from "@/components/avatar/Avatar";
+import FabButton from "@/components/buttons/FabButton";
+import FabMenuButton from "@/components/buttons/FabMenuButton";
 import { useGroups } from "@/hooks";
 import { IGroup } from "@/types";
 import { getFileUrlFromKey } from "@/utils";
@@ -45,8 +47,10 @@ export default function GroupsScreen() {
     />
   );
 
+  const addGroup = () => router.push("/(app)/(groups)/add");
+  const joinGroup = () => router.push("/(app)/(groups)/add");
+
   const handleEndReached = async () => {
-    console.log(hasNextPage, isFetchingNextPage);
     if (hasNextPage && !isFetchingNextPage) {
       await fetchNextPage();
     }
@@ -80,6 +84,18 @@ export default function GroupsScreen() {
           </Text>
         </View>
       )}
+      <FabButton iconName="plus-outline" onPress={addGroup} />
+      <FabMenuButton
+        iconName="plus"
+        menuItems={[
+          {
+            icon: "person-add-outline",
+            label: "Join Group",
+            onPress: joinGroup,
+          },
+          { icon: "plus-outline", label: "Add Group", onPress: addGroup },
+        ]}
+      />
     </Layout>
   );
 }

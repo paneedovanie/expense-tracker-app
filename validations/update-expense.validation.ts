@@ -1,10 +1,10 @@
 import { EExpenseCategory, ERecurrenceFrenquency, ESplitType } from "@/types";
 import { z } from "zod";
+import { ExpenseShareValidation } from "./expense-share.validation";
 
 export const UpdateExpenseValidation = z.object({
   description: z.string().nonempty("Required"),
-  amount: z.number(),
-  paidByUserId: z.string().uuid(),
+  amount: z.coerce.number(),
   date: z.date(),
   category: z.nativeEnum(EExpenseCategory),
   notes: z.string(),
@@ -14,4 +14,10 @@ export const UpdateExpenseValidation = z.object({
   recurrenceInterval: z.number().optional(),
   recurrenceEndDate: z.date().optional(),
   recurrenceStartDate: z.date().optional(),
+  shares: ExpenseShareValidation.array()
+    .min(2)
+    .min(2)
+    .refine((shares) => shares.some((share) => share.isPayer), {
+      message: "At least one payer is required",
+    }),
 });

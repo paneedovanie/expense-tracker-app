@@ -4,8 +4,7 @@ import { AvatarFileValidation } from "./avatar-file.validation";
 export const UpdateAuthUserValidation = z
   .object({
     avatarFile: AvatarFileValidation.optional(),
-    firstName: z.string().nonempty("Required"),
-    lastName: z.string().nonempty("Required"),
+    fullName: z.string().nonempty("Required"),
   })
   .superRefine((data, ctx) => {
     if (

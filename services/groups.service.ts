@@ -46,7 +46,6 @@ class GroupsService extends BaseService {
   }
 
   async update(id: string, input: TUpdateGroupInput) {
-    console.log(input.avatarFile);
     return api.post<IGroup>(
       `${this.apiBaseUrl}/api/v1/groups/${id}`,
       jsonToFormData(input),

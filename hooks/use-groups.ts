@@ -12,6 +12,7 @@ import { atom, useAtom } from "jotai";
 import { useInfiniteQuery } from "react-query";
 
 const groupsStore = atom<IGroup[]>([]);
+const groupStore = atom<IGroup>();
 
 export interface IUseGroupsProps {
   id?: string;
@@ -21,6 +22,7 @@ export const useGroups = (props?: IUseGroupsProps) => {
   const { id } = props ?? {};
 
   const [groups, setGroups] = useAtom(groupsStore);
+  const [group, setGroup] = useAtom(groupStore);
 
   const {
     fetchNextPage,
@@ -51,10 +53,14 @@ export const useGroups = (props?: IUseGroupsProps) => {
     }
   );
 
-  const { data: group, isFetching: isFetchingGroup } = useQuery<IGroup, Error>(
+  const { isFetching: isFetchingGroup, refetch } = useQuery<IGroup, Error>(
     ["group", id],
     () => groupsService.get(id!),
-    { enabled: !!id }
+    {
+      enabled: !!id,
+      onSuccess: setGroup,
+      cacheTime: 0,
+    }
   );
 
   const { mutate: create, isLoading: isCreating } = useMutation<
@@ -99,5 +105,6 @@ export const useGroups = (props?: IUseGroupsProps) => {
     fetchNextPage,
     addMembers,
     removeMembers,
+    refetch,
   };
 };

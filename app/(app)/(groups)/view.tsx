@@ -1,21 +1,19 @@
 import { router, useLocalSearchParams, useNavigation } from "expo-router";
-import { useExpenses, useGroups } from "@/hooks";
+import { useGroups } from "@/hooks";
 import Avatar from "@/components/avatar/Avatar";
-import { Layout, Text, Spinner, Icon } from "@ui-kitten/components";
-import { StyleSheet, TouchableOpacity, View } from "react-native";
+import { Layout, Text, Spinner } from "@ui-kitten/components";
+import { StyleSheet, View } from "react-native";
 import { getFileUrlFromKey } from "@/utils";
 import { useLayoutEffect } from "react";
 import GroupViewHeaderMenu from "@/components/groups/view/GroupViewHeaderMenu";
 import GroupViewExpenses from "@/components/groups/view/GroupViewExpenses";
-import { map } from "lodash";
+import FabButton from "@/components/buttons/FabButton";
 
 export default function ViewGroupScreen() {
   const searchParams = useLocalSearchParams();
   const id = searchParams.id as string;
   const { group, isFetching } = useGroups({ id });
   const navigation = useNavigation();
-
-  const { expenses } = useExpenses();
 
   // Example floating button: navigates to Manage Members
   const handleFabPress = () => {
@@ -62,10 +60,7 @@ export default function ViewGroupScreen() {
         </Text>
       </View>
       <GroupViewExpenses />
-      {/* Floating Action Button */}
-      <TouchableOpacity style={styles.fab} onPress={handleFabPress}>
-        <Icon name="plus-outline" fill="#fff" style={styles.fabIcon} />
-      </TouchableOpacity>
+      <FabButton iconName="plus-outline" onPress={handleFabPress} />
     </Layout>
   );
 }
@@ -108,26 +103,5 @@ const styles = StyleSheet.create({
   manageButton: {
     marginTop: 12,
     width: "100%",
-  },
-  fab: {
-    position: "absolute",
-    right: 32,
-    bottom: 32,
-    backgroundColor: "#3366FF",
-    borderRadius: 32,
-    width: 56,
-    height: 56,
-    justifyContent: "center",
-    alignItems: "center",
-    elevation: 6,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-  },
-  fabIcon: {
-    width: 28,
-    height: 28,
-    tintColor: "#fff",
   },
 });

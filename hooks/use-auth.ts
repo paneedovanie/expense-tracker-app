@@ -53,6 +53,12 @@ export const useAuth = () => {
     TLoginInput
   >((input: TLoginInput) => authService.login(input));
 
+  const { mutate: devLogin, isLoading: isDevLoggingIn } = useMutation<
+    { accessToken: string },
+    Error,
+    TLoginInput
+  >((input: TLoginInput) => authService.devLogin(input));
+
   const { mutate: passwordReset, isLoading: isPasswordResetting } = useMutation<
     void,
     Error,
@@ -101,6 +107,7 @@ export const useAuth = () => {
 
   const isLoading =
     isLoggingIn ||
+    isDevLoggingIn ||
     isRegistering ||
     isPasswordResetting ||
     isPasswordChanging ||
@@ -116,6 +123,7 @@ export const useAuth = () => {
     isLoading,
     register,
     login,
+    devLogin,
     updateUser,
     passwordReset,
     changePassword,

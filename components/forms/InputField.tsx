@@ -15,11 +15,13 @@ export interface InputFieldProps extends InputProps {
   }: {
     field: ControllerRenderProps<FieldValues, string>;
   }) => ReactElement;
+  noCaption?: boolean;
 }
 
 export default function InputField({
   name,
   render,
+  noCaption,
   ...props
 }: InputFieldProps) {
   const form = useFormContext();
@@ -37,7 +39,9 @@ export default function InputField({
             {...props}
             status={errors[name]?.message ? "danger" : "default"}
             onChangeText={(v) => form.setValue(name, v)}
-            caption={<Text>{errors[name]?.message?.toString()}</Text>}
+            caption={
+              !noCaption && <Text>{errors[name]?.message?.toString()}</Text>
+            }
           />
         ))
       }

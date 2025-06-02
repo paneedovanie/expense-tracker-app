@@ -2,8 +2,7 @@ export interface IUser {
   id: string;
   email: string | null;
   passwordHash: string | null;
-  firstName: string;
-  lastName: string;
+  fullName: string;
   avatarUrl: string;
   isVerified: boolean;
   createdAt: Date;

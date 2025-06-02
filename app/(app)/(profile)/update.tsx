@@ -21,8 +21,7 @@ export default function UpdateProfileScreen() {
   const form = useForm<TUpdateAuthUserInput>({
     resolver: zodResolver(UpdateAuthUserValidation),
     defaultValues: {
-      firstName: user?.firstName || "",
-      lastName: user?.lastName || "",
+      fullName: user?.fullName || "",
     },
   });
 
@@ -62,9 +61,7 @@ export default function UpdateProfileScreen() {
             )}
           />
 
-          <InputField name="firstName" label="First Name" />
-
-          <InputField name="lastName" label="Last Name" />
+          <InputField name="fullName" label="First Name" />
 
           <Button
             style={styles.saveButton}

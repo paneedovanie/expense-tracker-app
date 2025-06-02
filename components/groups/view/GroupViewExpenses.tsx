@@ -31,9 +31,6 @@ export default function GroupViewExpenses() {
     <ListItem
       style={styles.listItem}
       title={item.description}
-      description={`${formatCurrency(item.amount)} paid by ${
-        item.paidBy.firstName
-      }`}
       accessoryLeft={(props) => (
         <Avatar {...props} style={styles.avatar} shape="rounded" />
       )}
@@ -47,7 +44,6 @@ export default function GroupViewExpenses() {
   );
 
   const handleEndReached = async () => {
-    console.log(hasNextPage, isFetchingNextPage);
     if (hasNextPage && !isFetchingNextPage) {
       await fetchNextPage();
     }

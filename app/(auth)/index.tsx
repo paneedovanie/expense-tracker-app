@@ -8,11 +8,15 @@ import { TLoginInput } from "@/types";
 import { LoginValidation } from "@/validations";
 import { useAuth } from "@/hooks";
 import { useToast } from "@/components/providers/ToastProvider";
+import DevLogin from "@/components/dev/DevLogin";
+import { useSetAtom } from "jotai";
+import { accessTokenStore } from "@/stores";
 
 export default function LoginScreen() {
   const router = useRouter();
   const toast = useToast();
-  const { login, isLoading } = useAuth();
+  const setAccessToken = useSetAtom(accessTokenStore);
+  const { login, devLogin, isLoading } = useAuth();
 
   const form = useForm({
     resolver: zodResolver(LoginValidation),
@@ -25,6 +29,19 @@ export default function LoginScreen() {
         toast.showToast({
           status: "success",
           message: "Logged in successfully. Check your email to login.",
+        });
+      },
+    });
+  };
+
+  const submitDev = (input: TLoginInput) => {
+    devLogin(input, {
+      onSuccess: ({ accessToken }) => {
+        setAccessToken(accessToken);
+        form.reset();
+        toast.showToast({
+          status: "success",
+          message: "Logged in successfully.",
         });
       },
     });
@@ -61,6 +78,10 @@ export default function LoginScreen() {
           >
             Login
           </Button>
+          <DevLogin
+            isLoading={isLoading}
+            onSubmit={form.handleSubmit(submitDev)}
+          />
           <View style={styles.divider} />
           <Button
             appearance="ghost"

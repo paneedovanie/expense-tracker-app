@@ -8,7 +8,6 @@ export interface IExpense {
   description: string;
   amount: number;
   currency: string;
-  paidByUserId: string;
   date: Date;
   groupId: string | null;
   category: EExpenseCategory;
@@ -21,5 +20,4 @@ export interface IExpense {
   recurrenceEndDate: Date | null;
   recurrenceStartDate: Date | null;
   originalRecurringExpenseId: string;
-  paidBy: IUser;
 }

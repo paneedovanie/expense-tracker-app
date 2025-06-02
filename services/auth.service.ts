@@ -41,6 +41,13 @@ class AuthService extends BaseService {
     return api.post<void>(`${apiBaseUrl}/api/v1/auth/login`, input);
   }
 
+  async devLogin(input: TLoginInput) {
+    return api.post<{ accessToken: string }>(
+      `${apiBaseUrl}/api/v1/auth/dev-login`,
+      input
+    );
+  }
+
   async passwordReset(input: TPasswordResetInput) {
     return api.post<void>(`${apiBaseUrl}/api/v1/auth/password-reset`, input);
   }

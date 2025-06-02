@@ -14,7 +14,7 @@ export default function GroupViewHeaderMenu({ id }: { id: string }) {
       });
     } else if (index === 1) {
       router.push({
-        pathname: "/(app)/(groups)/members",
+        pathname: "/(app)/(groups)/(members)",
         params: { id },
       });
     }

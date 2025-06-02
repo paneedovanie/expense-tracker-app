@@ -16,7 +16,7 @@ export default function ProfileScreen() {
           style={styles.avatar}
         />
         <Text category="h5" style={styles.name}>
-          {user?.firstName}
+          {user?.fullName}
         </Text>
         <Text appearance="hint" style={styles.email}>
           {user?.email}
