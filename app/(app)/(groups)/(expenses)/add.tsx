@@ -1,3 +1,4 @@
+'use client';
 import { useExpenses, useGroups } from "@/hooks";
 import { Spinner } from "@ui-kitten/components";
 import { router, useLocalSearchParams } from "expo-router";

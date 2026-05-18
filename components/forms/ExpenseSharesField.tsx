@@ -98,7 +98,7 @@ const PercentageInputs = ({
     percentage: string | number
   ) => {
     value[index].percentage = percentage as number;
-    value[index].amount = totalAmount * (Number(percentage) / 100);
+    value[index].amount = round(totalAmount * (Number(percentage) / 100), 2);
     value[index].isDirty = true;
     onChange(value);
   };
@@ -136,7 +136,7 @@ const SharesInputs = ({ users, totalAmount, value, onChange }: InputsProps) => {
     );
 
     forEach(value, (item, i) => {
-      value[i].amount = totalAmount * (Number(item.shareValue) / totalShares);
+      value[i].amount = round(totalAmount * (Number(item.shareValue) / totalShares), 2);
     });
 
     onChange(value);

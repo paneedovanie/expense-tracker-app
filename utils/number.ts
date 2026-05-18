@@ -50,7 +50,7 @@ export const getExpenseAmount = (
   const discount = expense.discount ?? 0;
 
   if (expense.discountType === EDiscountType.Exact) {
-    return expense.amount - discount;
+    return round(expense.amount - discount, 2);
   }
 
   return round(expense.amount - expense.amount * (discount / 100), 2);

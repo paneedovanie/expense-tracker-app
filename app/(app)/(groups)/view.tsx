@@ -1,3 +1,4 @@
+'use client';
 import { Link, router, useLocalSearchParams, useNavigation } from "expo-router";
 import { useGroups } from "@/hooks";
 import Avatar from "@/components/avatar/Avatar";
@@ -10,8 +11,8 @@ import GroupViewExpenses from "@/components/groups/view/GroupViewExpenses";
 import FabButton from "@/components/buttons/FabButton";
 
 export default function ViewGroupScreen() {
-  const searchParams = useLocalSearchParams();
-  const groupId = searchParams.groupId as string;
+  const { id, groupId: paramGroupId } = useLocalSearchParams() as { id?: string; groupId?: string };
+  const groupId = (id ?? paramGroupId) as string;
   const { group, isFetching } = useGroups({ id: groupId });
   const navigation = useNavigation();
 

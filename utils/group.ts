@@ -169,10 +169,10 @@ export const generateGroupSummaryHtml = (
                     color = theme["color-danger-400"];
                   }
 
-                  return `<td  style="text-align: right; padding: 8px 16px; border-top: 1px black solid; color: ${color}">${formatCurrency(
-                    total,
-                    "PHP"
-                  )}</td>`;
+                     return `<td  style="text-align: right; padding: 8px 16px; border-top: 1px black solid; color: ${color}">${formatCurrency(
+                      round(total, 2),
+                      "PHP"
+                    )}</td>`;
                 }),
                 ""
               )}

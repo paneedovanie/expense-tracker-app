@@ -12,7 +12,7 @@ import {
 import { useCallback, useMemo } from "react";
 import { IExpense } from "@/types";
 import UserSharesItem from "./UserSharesItem";
-import { filter } from "lodash";
+import { filter, round } from "lodash";
 import { IGroupMember } from "@/types/i-group-member";
 
 export interface UserSharesProps {
@@ -81,11 +81,13 @@ export function UserShares({
           renderItem={({ item }: { item: IGroupMember }) => {
             const userId = item.user.id;
             const fullname = getGroupMemberFullname(expense.group, item.userId);
-            const amount =
+            const amount = round(
               (paidByMapper[item.userId] ?? 0) -
-              (paidForMapper[userId] ?? 0) -
-              (paymentReceivedMapper[item.userId] ?? 0) +
-              (paymentSentMapper[item.userId] ?? 0);
+                (paidForMapper[userId] ?? 0) -
+                (paymentReceivedMapper[item.userId] ?? 0) +
+                (paymentSentMapper[item.userId] ?? 0),
+              2
+            );
 
             const avatarUrl = getFileUrlFromKey(
               expense.group.members.find(
