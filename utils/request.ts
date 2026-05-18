@@ -44,10 +44,35 @@ export function objectToQueryString(
 
 export function jsonToFormData(input: Record<string, unknown>) {
   const formData = new FormData();
-  Object.entries(input).forEach(([key, value]) => {
-    if (value !== undefined && value !== null) {
-      formData.append(key, value as string | Blob);
+
+  const processValue = (key: string, value: unknown) => {
+    if (value === undefined || value === null) {
+      return;
     }
+
+    if (value instanceof Date) {
+      formData.append(key, value.toISOString());
+    } else if (Array.isArray(value)) {
+      // Handle arrays by appending each item with the same key
+      value.forEach((item, index) => {
+        if (typeof item === "object" && item !== null) {
+          // For array of objects, stringify each object
+          formData.append(`${key}[${index}]`, JSON.stringify(item));
+        } else {
+          formData.append(`${key}[${index}]`, String(item));
+        }
+      });
+    } else if (typeof value === "object") {
+      // Handle nested objects by stringifying them
+      formData.append(key, JSON.stringify(value));
+    } else {
+      formData.append(key, String(value));
+    }
+  };
+
+  Object.entries(input).forEach(([key, value]) => {
+    processValue(key, value);
   });
+
   return formData;
 }

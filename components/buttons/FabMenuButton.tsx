@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Icon } from "@ui-kitten/components";
+import { Icon, useTheme } from "@ui-kitten/components";
 import {
   StyleSheet,
   TouchableOpacity,
@@ -25,6 +25,7 @@ export default function FabMenuButton({
   style,
   ...props
 }: FabMenuButtonProps) {
+  const theme = useTheme();
   const [open, setOpen] = useState(false);
 
   return (
@@ -33,7 +34,12 @@ export default function FabMenuButton({
         menuItems.map((item, idx) => (
           <TouchableOpacity
             key={idx}
-            style={[styles.fab, styles.menu, { bottom: 76 * (idx + 1) }]}
+            style={[
+              styles.fab,
+              styles.menu,
+              { bottom: 76 * (idx + 1) },
+              { backgroundColor: theme["color-primary-500"] },
+            ]}
             onPress={() => {
               setOpen(false);
               item.onPress();
@@ -46,7 +52,11 @@ export default function FabMenuButton({
         ))}
       <TouchableOpacity
         {...props}
-        style={[styles.fab, styles.mainFab]}
+        style={[
+          styles.fab,
+          styles.mainFab,
+          { backgroundColor: theme["color-primary-500"] },
+        ]}
         onPress={() => setOpen((prev) => !prev)}
         activeOpacity={0.8}
       >
@@ -71,7 +81,7 @@ const styles = StyleSheet.create({
   fab: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#3366FF",
+    backgroundColor: "#1A7270",
     borderRadius: 32,
     width: 56,
     height: 56,

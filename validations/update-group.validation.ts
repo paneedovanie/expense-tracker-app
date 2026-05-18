@@ -1,11 +1,11 @@
 import { z } from "zod";
-import { AvatarFileValidation } from "./avatar-file.validation";
+import { ImageFileValidation } from "./avatar-file.validation";
 
 export const UpdateGroupValidation = z
   .object({
     name: z.string().nonempty("Required"),
     description: z.coerce.string().optional(),
-    avatarFile: AvatarFileValidation.optional(),
+    avatarFile: ImageFileValidation.optional(),
   })
   .superRefine((data, ctx) => {
     if (

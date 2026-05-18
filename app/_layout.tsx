@@ -10,6 +10,7 @@ import { EvaIconsPack } from "@ui-kitten/eva-icons";
 import { ToastProvider } from "@/components/providers/ToastProvider";
 import * as Linking from "expo-linking";
 import { apiBaseUrl } from "@/constants/env";
+import { default as customTheme } from "@/custom-theme.json";
 
 export {
   // Catch any errors thrown by the Layout component.
@@ -42,7 +43,6 @@ const Content = () => {
     <Stack>
       <Stack.Screen name="(auth)" options={{ headerShown: false }} />
       <Stack.Screen name="(app)" options={{ headerShown: false }} />
-      <Stack.Screen name="modal" options={{ presentation: "modal" }} />
     </Stack>
   );
 };
@@ -60,15 +60,13 @@ export default function RootLayout() {
   }, [url]);
 
   return (
-    <>
-      <ApplicationProvider {...eva} theme={eva.light}>
-        <ToastProvider>
-          <ReactQueryProvider>
-            <IconRegistry icons={EvaIconsPack} />
-            <Content />
-          </ReactQueryProvider>
-        </ToastProvider>
-      </ApplicationProvider>
-    </>
+    <ApplicationProvider {...eva} theme={{ ...eva.light, ...customTheme }}>
+      <ToastProvider>
+        <ReactQueryProvider>
+          <IconRegistry icons={EvaIconsPack} />
+          <Content />
+        </ReactQueryProvider>
+      </ToastProvider>
+    </ApplicationProvider>
   );
 }

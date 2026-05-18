@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-export const AvatarFileValidation = z
+export const ImageFileValidation = z
   .object({
     uri: z.string(),
     type: z.enum(["image/jpeg", "image/png"], {

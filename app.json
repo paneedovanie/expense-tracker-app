@@ -1,25 +1,25 @@
 {
   "expo": {
-    "name": "expense-tracker-app",
+    "name": "Expense Tracker App",
     "slug": "expense-tracker-app",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "orientation": "portrait",
-    "icon": "./assets/images/icon.png",
+    "icon": "./assets/images/playstore.png",
     "scheme": "expensetrackerapp",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "splash": {
-      "image": "./assets/images/splash-icon.png",
+      "image": "./assets/images/splash-icon.jpg",
       "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
+      "backgroundColor": "#fff"
     },
     "ios": {
       "supportsTablet": true
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/images/adaptive-icon.png",
-        "backgroundColor": "#ffffff"
+        "foregroundImage": "./assets/images/playstore.png",
+        "backgroundColor": "#fff"
       },
       "edgeToEdgeEnabled": true,
       "package": "com.paneedovanie.expensetrackerapp",
@@ -34,7 +34,7 @@
             },
             {
               "scheme": "https",
-              "host": "expense-tracker-api.hiramis.site"
+              "host": "expense-tracker-api.hiramis.org"
             }
           ],
           "category": ["BROWSABLE", "DEFAULT"]
@@ -60,7 +60,7 @@
       "typedRoutes": true
     },
     "extra": {
-      "apiBaseUrl": "https://expense-tracker-api.hiramis.site"
+      "apiBaseUrl": "https://expense-tracker-api.hiramis.org"
     }
   }
 }

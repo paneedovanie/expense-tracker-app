@@ -11,6 +11,7 @@ import { useToast } from "@/components/providers/ToastProvider";
 import DevLogin from "@/components/dev/DevLogin";
 import { useSetAtom } from "jotai";
 import { accessTokenStore } from "@/stores";
+import { saveToken } from "@/utils";
 
 export default function LoginScreen() {
   const router = useRouter();
@@ -36,8 +37,9 @@ export default function LoginScreen() {
 
   const submitDev = (input: TLoginInput) => {
     devLogin(input, {
-      onSuccess: ({ accessToken }) => {
+      onSuccess: async ({ accessToken }) => {
         setAccessToken(accessToken);
+        await saveToken(accessToken);
         form.reset();
         toast.showToast({
           status: "success",

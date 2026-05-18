@@ -3,32 +3,38 @@ import {
   IExpense,
   IPaginatedResponse,
   TCreateExpenseInput,
+  TSettleUpInput,
   TUpdateExpenseInput,
 } from "@/types";
 import { useMutation, useQuery } from "react-query";
-import { atom, useAtom } from "jotai";
 import { useInfiniteQuery } from "react-query";
+import { useState } from "react";
+import { atom, useAtom } from "jotai";
 
-const expensesStore = atom<IExpense[]>([]);
+const expenseStore = atom<IExpense>();
 
 export interface IUseExpensesProps {
   id?: string;
+  groupId?: string;
 }
 
 export const useExpenses = (props?: IUseExpensesProps) => {
-  const { id } = props ?? {};
+  const { id, groupId } = props ?? {};
 
-  const [expenses, setExpenses] = useAtom(expensesStore);
+  const [expenses, setExpenses] = useState<IExpense[]>([]);
+  const [expense, setExpense] = useAtom(expenseStore);
 
   const {
     fetchNextPage,
     hasNextPage,
     isFetching: isFetchingPaginated,
     isFetchingNextPage,
+    refetch: refetchMany,
   } = useInfiniteQuery<IPaginatedResponse<IExpense>, Error>(
-    ["expenses"],
+    ["expenses", groupId],
     ({ pageParam = 1 }) =>
       expensesService.paginated({
+        groupId,
         page: pageParam,
         orderBy: "createdAt",
         orderDir: "DESC",
@@ -46,13 +52,20 @@ export const useExpenses = (props?: IUseExpensesProps) => {
         const allExpenses = result.pages.flatMap((page) => page.data);
         setExpenses(allExpenses);
       },
+      cacheTime: 0,
+      staleTime: 0,
     }
   );
 
-  const { data: expense, isFetching: isFetchingExpense } = useQuery<
+  const { isFetching: isFetchingExpense, refetch: refetchOne } = useQuery<
     IExpense,
     Error
-  >(["expense", id], () => expensesService.get(id!), { enabled: !!id });
+  >(["expense", id], () => expensesService.get(id!), {
+    onSuccess: setExpense,
+    enabled: !!id,
+    cacheTime: 0,
+    staleTime: 0,
+  });
 
   const { mutate: create, isLoading: isCreating } = useMutation<
     IExpense,
@@ -64,10 +77,23 @@ export const useExpenses = (props?: IUseExpensesProps) => {
     IExpense,
     Error,
     TUpdateExpenseInput
-  >((input: TUpdateExpenseInput) => expensesService.update(id!, input));
+  >((input: TUpdateExpenseInput) => expensesService.update(id!, input), {
+    onSuccess: setExpense,
+  });
+
+  const { mutate: remove, isLoading: isRemoving } = useMutation<
+    IExpense,
+    Error
+  >(() => expensesService.delete(id!));
+
+  const { mutate: setteUp, isLoading: isSettlingUp } = useMutation<
+    void,
+    Error,
+    TSettleUpInput
+  >((input: TSettleUpInput) => expensesService.setteUp(id!, input));
 
   const isFetching = isFetchingPaginated || isFetchingExpense;
-  const isLoading = isCreating || isUpdating;
+  const isLoading = isCreating || isUpdating || isRemoving || isSettlingUp;
 
   return {
     expense,
@@ -78,6 +104,10 @@ export const useExpenses = (props?: IUseExpensesProps) => {
     hasNextPage,
     create,
     update,
+    remove,
     fetchNextPage,
+    setteUp,
+    refetchOne,
+    refetchMany,
   };
 };

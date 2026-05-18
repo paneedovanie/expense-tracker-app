@@ -3,6 +3,7 @@ import {
   IPaginatedQuery,
   IPaginatedResponse,
   TCreateExpenseInput,
+  TSettleUpInput,
   TUpdateExpenseInput,
 } from "@/types";
 import api from "@/utils/api";
@@ -31,27 +32,43 @@ class ExpensesService extends BaseService {
   }
 
   async create(input: TCreateExpenseInput) {
+    return api.post<IExpense>(`${this.apiBaseUrl}/api/v1/expenses`, input, {
+      headers: {
+        // "Content-Type": "multipart/form-data",
+        ...(await this.applyAccessToken()),
+      },
+    });
+  }
+
+  async update(id: string, input: TUpdateExpenseInput) {
     return api.post<IExpense>(
-      `${this.apiBaseUrl}/api/v1/expenses`,
-      jsonToFormData(input),
+      `${this.apiBaseUrl}/api/v1/expenses/${id}`,
+      input,
       {
         headers: {
-          "Content-Type": "multipart/form-data",
+          // "Content-Type": "multipart/form-data",
           ...(await this.applyAccessToken()),
         },
       }
     );
   }
 
-  async update(id: string, input: TUpdateExpenseInput) {
-    return api.post<IExpense>(
+  async delete(id: string) {
+    return api.delete<IExpense>(
       `${this.apiBaseUrl}/api/v1/expenses/${id}`,
-      jsonToFormData(input),
+      undefined,
       {
-        headers: {
-          "Content-Type": "multipart/form-data",
-          ...(await this.applyAccessToken()),
-        },
+        headers: await this.applyAccessToken(),
+      }
+    );
+  }
+
+  async setteUp(id: string, input: TSettleUpInput) {
+    return api.post<void>(
+      `${this.apiBaseUrl}/api/v1/expenses/${id}/settle-up`,
+      input,
+      {
+        headers: await this.applyAccessToken(),
       }
     );
   }

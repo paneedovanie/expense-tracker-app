@@ -1,6 +1,18 @@
 import { router } from "expo-router";
-import { Button, OverflowMenu, MenuItem, Icon } from "@ui-kitten/components";
+import {
+  Button,
+  OverflowMenu,
+  MenuItem,
+  Icon,
+  IconProps,
+} from "@ui-kitten/components";
 import { useState } from "react";
+
+const EditIcon = (props: IconProps) => <Icon {...props} name="edit-outline" />;
+
+const MembersIcon = (props: IconProps) => (
+  <Icon {...props} name="people-outline" />
+);
 
 export default function GroupViewHeaderMenu({ id }: { id: string }) {
   const [visible, setVisible] = useState(false);
@@ -27,15 +39,14 @@ export default function GroupViewHeaderMenu({ id }: { id: string }) {
           appearance="ghost"
           accessoryLeft={<Icon name="more-vertical-outline" />}
           onPress={() => setVisible(true)}
-          size="small"
         />
       )}
       visible={visible}
       onBackdropPress={() => setVisible(false)}
       onSelect={({ row }) => onMenuSelect(row)}
     >
-      <MenuItem title="Edit Group" />
-      <MenuItem title="Manage Members" />
+      <MenuItem title="Edit Group" accessoryLeft={EditIcon} />
+      <MenuItem title="Members" accessoryLeft={MembersIcon} />
     </OverflowMenu>
   );
 }

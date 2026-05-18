@@ -1,9 +1,9 @@
 import { z } from "zod";
-import { AvatarFileValidation } from "./avatar-file.validation";
+import { ImageFileValidation } from "./avatar-file.validation";
 
 export const RegisterValidation = z
   .object({
-    avatarFile: AvatarFileValidation.optional(),
+    avatarFile: ImageFileValidation.optional(),
     fullName: z.string().nonempty("Required"),
     email: z.string().email().nonempty("Required"),
   })

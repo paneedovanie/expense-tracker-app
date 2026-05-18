@@ -7,7 +7,7 @@ import {
   TRegisterInput,
   TUpdateAuthUserInput,
 } from "@/types";
-import { deleteToken, getToken } from "@/utils";
+import { deleteToken, getToken, saveToken } from "@/utils";
 import { useEffect } from "react";
 import { useMutation, useQuery } from "react-query";
 import { atom, useAtom } from "jotai";
@@ -83,9 +83,10 @@ export const useAuth = () => {
     deleteToken();
   };
 
-  useEffect(() => {
+  const initToken = async () => {
     // If accessTokenParam exists and is different from current accessToken, update it
     if (accessTokenParam && accessToken !== accessTokenParam) {
+      await saveToken(accessTokenParam);
       setAccessToken(accessTokenParam);
       return;
     }
@@ -103,6 +104,10 @@ export const useAuth = () => {
         setIsFetching(false);
       }
     });
+  };
+
+  useEffect(() => {
+    initToken();
   }, [accessTokenParam, setAccessToken, setIsFetching]);
 
   const isLoading =

@@ -24,6 +24,7 @@ export default function GroupsLayout() {
       <Stack.Screen name="edit" options={{ headerTitle: "Edit Group" }} />
       <Stack.Screen name="(members)" options={{ headerShown: false }} />
       <Stack.Screen name="(expenses)" options={{ headerShown: false }} />
+      <Stack.Screen name="summary" options={{ headerTitle: "Summary" }} />
     </Stack>
   );
 }

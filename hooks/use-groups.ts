@@ -10,6 +10,7 @@ import {
 import { useMutation, useQuery } from "react-query";
 import { atom, useAtom } from "jotai";
 import { useInfiniteQuery } from "react-query";
+import { useMemo } from "react";
 
 const groupsStore = atom<IGroup[]>([]);
 const groupStore = atom<IGroup>();
@@ -23,6 +24,16 @@ export const useGroups = (props?: IUseGroupsProps) => {
 
   const [groups, setGroups] = useAtom(groupsStore);
   const [group, setGroup] = useAtom(groupStore);
+  const members = group?.members ?? [];
+
+  const usersMapper: Record<string, string> = useMemo(() => {
+    return members.reduce((acc, member) => {
+      return {
+        ...acc,
+        [member.user.id]: member.user,
+      };
+    }, {});
+  }, []);
 
   const {
     fetchNextPage,
@@ -75,6 +86,10 @@ export const useGroups = (props?: IUseGroupsProps) => {
     TUpdateGroupInput
   >((input: TUpdateGroupInput) => groupsService.update(id!, input));
 
+  const { mutate: remove, isLoading: isRemoving } = useMutation<IGroup, Error>(
+    () => groupsService.delete(id!)
+  );
+
   const { mutate: addMembers, isLoading: isAddingMembers } = useMutation<
     void,
     Error,
@@ -91,17 +106,23 @@ export const useGroups = (props?: IUseGroupsProps) => {
 
   const isFetching = isFetchingPaginated || isFetchingGroup;
   const isLoading =
-    isCreating || isUpdating || isAddingMembers || isRemovingMembers;
+    isCreating ||
+    isUpdating ||
+    isAddingMembers ||
+    isRemovingMembers ||
+    isRemoving;
 
   return {
     group,
     groups,
+    usersMapper,
     isFetching,
     isLoading,
     isFetchingNextPage,
     hasNextPage,
     create,
     update,
+    remove,
     fetchNextPage,
     addMembers,
     removeMembers,

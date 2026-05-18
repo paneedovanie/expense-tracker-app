@@ -19,6 +19,7 @@ const getFileName = (uri: string) => {
 interface AvatarProps extends BaseAvatarProps {
   editable?: boolean;
   onChangeImage?: (file: IFile) => void; // Changed to File type
+  variants?: string[];
 }
 
 export default function Avatar({

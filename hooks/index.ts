@@ -4,3 +4,4 @@ export * from "./use-groups";
 export * from "./use-pagination";
 export * from "./use-users";
 export * from "./use-expenses";
+export * from "./use-payments";

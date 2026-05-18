@@ -58,6 +58,16 @@ class GroupsService extends BaseService {
     );
   }
 
+  async delete(id: string) {
+    return api.delete<IGroup>(
+      `${this.apiBaseUrl}/api/v1/groups/${id}`,
+      undefined,
+      {
+        headers: await this.applyAccessToken(),
+      }
+    );
+  }
+
   async addMembers(id: string, input: TAddGroupMembersInput) {
     return api.patch<void>(
       `${this.apiBaseUrl}/api/v1/groups/${id}/members`,

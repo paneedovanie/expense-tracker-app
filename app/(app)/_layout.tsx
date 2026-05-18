@@ -8,6 +8,7 @@ import React from "react";
 import type { BottomTabBarProps } from "@react-navigation/bottom-tabs";
 import { useAuth } from "@/hooks";
 import { StyleSheet } from "react-native";
+import { useProtectedRoute } from "@/hooks/use-protected-route";
 
 const TabBar = ({ state, navigation }: BottomTabBarProps) => {
   return (
@@ -55,6 +56,7 @@ const TabBar = ({ state, navigation }: BottomTabBarProps) => {
 };
 
 export default function AppLayout() {
+  useProtectedRoute();
   const { user } = useAuth();
 
   if (!user) {

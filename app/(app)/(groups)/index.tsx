@@ -1,19 +1,12 @@
 import Avatar from "@/components/avatar/Avatar";
 import FabButton from "@/components/buttons/FabButton";
-import FabMenuButton from "@/components/buttons/FabMenuButton";
 import { useGroups } from "@/hooks";
 import { IGroup } from "@/types";
-import { getFileUrlFromKey } from "@/utils";
-import {
-  Layout,
-  List,
-  ListItem,
-  Icon,
-  Text,
-  Spinner,
-} from "@ui-kitten/components";
+import { getFileUrlFromKey, getGroupMemberFullname } from "@/utils";
+import { Layout, List, Text, Spinner, Icon } from "@ui-kitten/components";
 import { router } from "expo-router";
-import { StyleSheet, View } from "react-native";
+import { join, map } from "lodash";
+import { StyleSheet, TouchableOpacity, View } from "react-native";
 
 export default function GroupsScreen() {
   const { groups, isFetching, isFetchingNextPage, fetchNextPage, hasNextPage } =
@@ -21,34 +14,63 @@ export default function GroupsScreen() {
 
   const renderItem = ({
     item,
-    index,
   }: {
     item: IGroup;
     index: number;
-  }): React.ReactElement => (
-    <ListItem
-      style={styles.listItem}
-      title={item.name}
-      description={item.description}
-      accessoryLeft={(props) => (
+  }): React.ReactElement => {
+    const displayedMembers = item.members?.slice(0, 3) || [];
+    const undisplayedCount =
+      (item.members?.length || 0) - displayedMembers.length;
+    const description =
+      displayedMembers.length > 0
+        ? join(
+            map(displayedMembers, (m) =>
+              getGroupMemberFullname(item, m.userId)
+            ),
+            ", "
+          ) + (undisplayedCount > 0 ? ` +${undisplayedCount}` : "")
+        : "No members";
+
+    return (
+      <TouchableOpacity
+        style={styles.card}
+        onPress={() => {
+          router.push({
+            pathname: "/(app)/(groups)/view",
+            params: { groupId: item.id },
+          });
+        }}
+      >
         <Avatar
-          {...props}
           src={getFileUrlFromKey(item.avatarUrl)}
           style={styles.avatar}
-          shape="rounded"
+          variants={["rounded"]}
         />
-      )}
-      onPress={() => {
-        router.push({
-          pathname: "/(app)/(groups)/view",
-          params: { id: item.id },
-        });
-      }}
-    />
-  );
+        <View style={styles.info}>
+          <Text style={styles.name} numberOfLines={1}>
+            {item.name}
+          </Text>
+          <Text style={styles.description} numberOfLines={1}>
+            {description}
+          </Text>
+        </View>
+        <View
+          style={{
+            flex: 1,
+            display: "flex",
+          }}
+        >
+          <Icon
+            name="arrow-ios-forward"
+            fill="#8F9BB3"
+            style={styles.arrowIcon}
+          />
+        </View>
+      </TouchableOpacity>
+    );
+  };
 
   const addGroup = () => router.push("/(app)/(groups)/add");
-  const joinGroup = () => router.push("/(app)/(groups)/add");
 
   const handleEndReached = async () => {
     if (hasNextPage && !isFetchingNextPage) {
@@ -71,6 +93,7 @@ export default function GroupsScreen() {
               </View>
             ) : null
           }
+          contentContainerStyle={{ paddingVertical: 12 }}
         />
       ) : isFetching ? (
         <View style={styles.emptyState}>
@@ -78,24 +101,12 @@ export default function GroupsScreen() {
         </View>
       ) : (
         <View style={styles.emptyState}>
-          <Icon name="people-outline" fill="#8F9BB3" style={styles.emptyIcon} />
           <Text appearance="hint" category="s1">
             No groups found.
           </Text>
         </View>
       )}
       <FabButton iconName="plus-outline" onPress={addGroup} />
-      <FabMenuButton
-        iconName="plus"
-        menuItems={[
-          {
-            icon: "person-add-outline",
-            label: "Join Group",
-            onPress: joinGroup,
-          },
-          { icon: "plus-outline", label: "Add Group", onPress: addGroup },
-        ]}
-      />
     </Layout>
   );
 }
@@ -103,23 +114,50 @@ export default function GroupsScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#fff",
+    backgroundColor: "#F7F9FC",
   },
   emptyState: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
   },
-  emptyIcon: {
-    width: 48,
-    height: 48,
-    marginBottom: 16,
+  card: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#fff",
+    borderRadius: 18,
+    marginHorizontal: 16,
+    marginVertical: 8,
+    padding: 10,
+    shadowColor: "#222",
+    shadowOpacity: 0.06,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 2,
   },
-  listItem: { height: 100 },
-  avatar: { width: 80, height: 80 },
+  avatar: { width: 56, height: 56, borderRadius: 16, marginRight: 16 },
+  info: { flex: 3, justifyContent: "center" },
+  name: {
+    fontWeight: "700",
+    fontSize: 18,
+    color: "#222B45",
+    marginBottom: 2,
+    letterSpacing: -0.5,
+  },
+  description: {
+    fontSize: 14,
+    color: "#8F9BB3",
+    marginTop: 2,
+    marginBottom: 0,
+  },
   footer: {
     paddingVertical: 16,
     alignItems: "center",
     justifyContent: "center",
+  },
+  arrowIcon: {
+    width: 20,
+    height: 20,
+    alignSelf: "flex-end",
   },
 });

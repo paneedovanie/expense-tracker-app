@@ -1,6 +1,7 @@
-import React, { FC, ReactNode, useCallback, useState } from "react";
+import React, { FC, ReactNode, useCallback, useEffect, useState } from "react";
 import { EvaStatus } from "@ui-kitten/components/devsupport";
 import { Toast, ToastProps } from "../toasts/Toast";
+import { StyleSheet, TouchableWithoutFeedback, View } from "react-native";
 
 interface ShowToastOptions {
   message: string | React.ReactNode;
@@ -28,6 +29,11 @@ export const ToastProvider = ({ children }: { children: ReactNode }) => {
     [setToasts]
   );
 
+  // Function to clear all toasts
+  const closeAllToasts = useCallback(() => {
+    setToasts([]);
+  }, []);
+
   const showToast = useCallback(
     (options: ShowToastOptions) => {
       setToasts((prevToasts) => [
@@ -47,6 +53,11 @@ export const ToastProvider = ({ children }: { children: ReactNode }) => {
   return (
     <ToastContext.Provider value={{ showToast }}>
       {children}
+      {toasts.length > 0 && (
+        <TouchableWithoutFeedback onPress={closeAllToasts}>
+          <View style={styles.overlay} />
+        </TouchableWithoutFeedback>
+      )}
       <>
         {toasts.map((toast) => (
           <Toast {...toast} key={toast.id} />
@@ -55,3 +66,11 @@ export const ToastProvider = ({ children }: { children: ReactNode }) => {
     </ToastContext.Provider>
   );
 };
+
+const styles = StyleSheet.create({
+  overlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "transparent",
+    zIndex: 999,
+  },
+});
