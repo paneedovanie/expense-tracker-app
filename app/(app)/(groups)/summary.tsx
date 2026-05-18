@@ -29,27 +29,40 @@ export default function GroupSummaryScreen() {
     (group && generateGroupSummaryHtml(theme, group, expenses)) ?? "";
 
   const extractAsPdf = useCallback(async () => {
-    if (!expenses) return;
-    // On iOS/android prints the given html. On web prints the HTML from the current page.
-    const { uri } = await Print.printToFileAsync({
-      html,
-      width: 400 + 80 * (group?.members.length ?? 0),
-    });
+    if (!expenses || !group) return;
+    try {
+      // On iOS/android prints the given html. On web prints the HTML from the current page.
+      const { uri } = await Print.printToFileAsync({
+        html,
+        width: 400 + 80 * (group?.members.length ?? 0),
+      });
 
-    // New file name
-    const newFileName = `${FileSystem.documentDirectory}${
-      group?.name
-    }_${dayjs().format("MM-DD-YYYY")}.pdf`;
+      // Move the generated PDF to the target location using the new File API
+      const sourceFile = new FileSystem.File(uri);
+      // Sanitize filename to avoid invalid characters
+      const safeName = group.name.replace(/[^a-zA-Z0-9 _-]/g, '_');
+      const targetFile = new FileSystem.File(
+        FileSystem.Paths.cache,
+        `${safeName}_${dayjs().format("MM-DD-YYYY")}.pdf`
+      );
+      
+      // Delete existing file if it exists to prevent FileAlreadyExistsException
+      if (targetFile.exists) {
+        targetFile.delete();
+      }
+      
+      sourceFile.move(targetFile);
 
-    // Rename the PDF file
-    await FileSystem.moveAsync({
-      from: uri,
-      to: newFileName,
-    });
-
-    console.log("File has been saved to:", newFileName);
-    await shareAsync(newFileName, { UTI: ".pdf", mimeType: "application/pdf" });
-  }, [expenses, html]);
+      console.log("File has been saved to:", targetFile.uri);
+      await shareAsync(targetFile.uri, {
+        UTI: ".pdf",
+        mimeType: "application/pdf",
+      });
+    } catch (error) {
+      console.error("Error exporting PDF:", error);
+      Alert.alert("Export Failed", "Could not export the summary as PDF.");
+    }
+  }, [expenses, html, group]);
 
   const handleMessage = useCallback((event: WebViewMessageEvent) => {
     const data = event.nativeEvent.data;
@@ -61,28 +74,23 @@ export default function GroupSummaryScreen() {
     if (!expenses || !webviewRef.current) return;
 
     try {
-      // New file name
-      const newFileName = `${FileSystem.documentDirectory}${
-        group?.name
-      }_${dayjs().format("MM-DD-YYYY")}.jpeg`;
-
-      // Rename the PDF file
-      await FileSystem.writeAsStringAsync(
-        newFileName,
-        (base64Image ?? "").replace(/^data:image\/jpeg;base64,/, ""),
-        {
-          encoding: FileSystem.EncodingType.Base64,
-        }
+      // Write image using new File API
+      const file = new FileSystem.File(
+        FileSystem.Paths.cache,
+        `${group?.name}_${dayjs().format("MM-DD-YYYY")}.jpeg`
       );
+      file.write((base64Image ?? "").replace(/^data:image\/jpeg;base64,/, ""), {
+        encoding: "base64",
+      });
 
-      console.log("File has been saved to:", newFileName);
-      await shareAsync(newFileName, {
+      console.log("File has been saved to:", file.uri);
+      await shareAsync(file.uri, {
         mimeType: "image/jpeg",
       });
     } catch (error) {
       console.error("Error capturing webview as image:", error);
     }
-  }, [expenses, html, webviewRef.current]);
+  }, [expenses, html, webviewRef.current, base64Image, group?.name]);
 
   const extract = useCallback(async () => {
     if (!expenses || !webviewRef.current) return;
@@ -125,7 +133,7 @@ export default function GroupSummaryScreen() {
     );
   }
 
-  // Expense not found
+  // Group not found
   if (!group) {
     return (
       <Layout style={styles.centered}>

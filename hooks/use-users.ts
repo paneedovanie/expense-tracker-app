@@ -1,7 +1,8 @@
 import { usersService } from "@/services";
 import { IUser, IPaginatedResponse } from "@/types";
 import { atom, useAtom } from "jotai";
-import { useInfiniteQuery } from "react-query";
+import { useInfiniteQuery } from "@tanstack/react-query";
+import { useEffect } from "react";
 
 const usersStore = atom<IUser[]>([]);
 const searchStore = atom<string>();
@@ -19,30 +20,31 @@ export const useUsers = (props?: IUseUsersProps) => {
     hasNextPage,
     isFetching: isFetchingPaginated,
     isFetchingNextPage,
-  } = useInfiniteQuery<IPaginatedResponse<IUser>, Error>(
-    ["users", search],
-    ({ pageParam = 1 }) =>
+    data,
+  } = useInfiniteQuery({
+    queryKey: ["users", search],
+    queryFn: async ({ pageParam }) =>
       usersService.paginated({
         search,
-        page: pageParam,
+        page: pageParam as number,
         orderBy: "createdAt",
         orderDir: "DESC",
       }),
-    {
-      getNextPageParam: (lastPage, allPages) => {
-        // Assuming 10 items per page, if less than 10, no more pages
-        if ((lastPage.data?.length ?? 0) === 10) {
-          return allPages.length + 1;
-        }
-        return undefined;
-      },
-      onSuccess: (result) => {
-        // Flatten all pages' data into a single array
-        const allUsers = result.pages.flatMap((page) => page.data);
-        setUsers(allUsers);
-      },
+    getNextPageParam: (lastPage: IPaginatedResponse<IUser>, allPages: IPaginatedResponse<IUser>[]) => {
+      if ((lastPage.data?.length ?? 0) === 10) {
+        return allPages.length + 1;
+      }
+      return undefined;
+    },
+    initialPageParam: 1,
+  });
+
+  useEffect(() => {
+    if (data?.pages) {
+      const allUsers = data.pages.flatMap((page) => page.data ?? []);
+      setUsers(allUsers);
     }
-  );
+  }, [data, setUsers]);
 
   const isFetching = isFetchingPaginated;
 

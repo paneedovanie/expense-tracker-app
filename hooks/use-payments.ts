@@ -5,9 +5,10 @@ import {
   TCreatePaymentInput,
   TUpdatePaymentInput,
 } from "@/types";
-import { useMutation, useQuery } from "react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import { useInfiniteQuery } from "@tanstack/react-query";
 import { atom, useAtom } from "jotai";
-import { useInfiniteQuery } from "react-query";
+import { useEffect } from "react";
 
 const paymentsStore = atom<IPayment[]>([]);
 
@@ -27,53 +28,50 @@ export const usePayments = (props?: IUsePaymentsProps) => {
     hasNextPage,
     isFetching: isFetchingPaginated,
     isFetchingNextPage,
-  } = useInfiniteQuery<IPaginatedResponse<IPayment>, Error>(
-    ["payments", expenseId],
-    ({ pageParam = 1 }) =>
+    data,
+  } = useInfiniteQuery({
+    queryKey: ["payments", expenseId],
+    queryFn: async ({ pageParam }) =>
       paymentsService.paginated({
         expenseId,
         groupId,
-        page: pageParam,
+        page: pageParam as number,
         orderBy: "createdAt",
         orderDir: "DESC",
       }),
-    {
-      getNextPageParam: (lastPage, allPages) => {
-        // Assuming 10 items per page, if less than 10, no more pages
-        if ((lastPage.data?.length ?? 0) === 10) {
-          return allPages.length + 1;
-        }
-        return undefined;
-      },
-      onSuccess: (result) => {
-        // Flatten all pages' data into a single array
-        const allPayments = result.pages.flatMap((page) => page.data);
-        setPayments(allPayments);
-      },
+    getNextPageParam: (lastPage: IPaginatedResponse<IPayment>, allPages: IPaginatedResponse<IPayment>[]) => {
+      if ((lastPage.data?.length ?? 0) === 10) {
+        return allPages.length + 1;
+      }
+      return undefined;
+    },
+    initialPageParam: 1,
+  });
+
+  useEffect(() => {
+    if (data?.pages) {
+      const allPayments = data.pages.flatMap((page) => page.data ?? []);
+      setPayments(allPayments);
     }
-  );
+  }, [data, setPayments]);
 
-  const { data: payment, isFetching: isFetchingPayment } = useQuery<
-    IPayment,
-    Error
-  >(["payment", id], () => paymentsService.get(id!), { enabled: !!id });
+  const { data: payment, isFetching: isFetchingPayment } = useQuery({
+    queryKey: ["payment", id],
+    queryFn: () => paymentsService.get(id!),
+    enabled: !!id,
+  });
 
-  const { mutate: create, isLoading: isCreating } = useMutation<
-    IPayment,
-    Error,
-    TCreatePaymentInput
-  >((input: TCreatePaymentInput) => paymentsService.create(input));
+  const { mutate: create, isPending: isCreating } = useMutation({
+    mutationFn: (input: TCreatePaymentInput) => paymentsService.create(input),
+  });
 
-  const { mutate: update, isLoading: isUpdating } = useMutation<
-    IPayment,
-    Error,
-    TUpdatePaymentInput
-  >((input: TUpdatePaymentInput) => paymentsService.update(id!, input));
+  const { mutate: update, isPending: isUpdating } = useMutation({
+    mutationFn: (input: TUpdatePaymentInput) => paymentsService.update(id!, input),
+  });
 
-  const { mutate: remove, isLoading: isRemoving } = useMutation<
-    IPayment,
-    Error
-  >(() => paymentsService.delete(id!));
+  const { mutate: remove, isPending: isRemoving } = useMutation({
+    mutationFn: () => paymentsService.delete(id!),
+  });
 
   const isFetching = isFetchingPaginated || isFetchingPayment;
   const isLoading = isCreating || isUpdating || isRemoving;

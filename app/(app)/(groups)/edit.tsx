@@ -7,7 +7,7 @@ import { getFileUrlFromKey } from "@/utils";
 import { useForm, FormProvider } from "react-hook-form";
 import { IGroup, TUpdateGroupInput } from "@/types";
 import InputField from "@/components/forms/InputField";
-import { useQueryClient } from "react-query";
+import { useQueryClient } from "@tanstack/react-query";
 import { UpdateGroupValidation } from "@/validations";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useToast } from "@/components/providers/ToastProvider";
@@ -89,8 +89,8 @@ export default function EditGroupScreen() {
   const submit = (data: TUpdateGroupInput) => {
     update(data, {
       onSuccess: () => {
-        queryClient.invalidateQueries(["groups"]);
-        queryClient.invalidateQueries(["group"]);
+queryClient.invalidateQueries({ queryKey: ["groups"] });
+        queryClient.invalidateQueries({ queryKey: ["group"] });
         router.back();
       },
     });
@@ -111,7 +111,7 @@ export default function EditGroupScreen() {
           onPress: () => {
             remove(undefined, {
               onSuccess: async () => {
-                await queryClient.invalidateQueries(["groups"]);
+                await queryClient.invalidateQueries({ queryKey: ["groups"] });
                 router.dismissAll();
                 toast.showToast({
                   status: "success",

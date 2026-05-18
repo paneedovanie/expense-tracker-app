@@ -7,10 +7,10 @@ import {
   TRemoveGroupMembersInput,
   TUpdateGroupInput,
 } from "@/types";
-import { useMutation, useQuery } from "react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useInfiniteQuery } from "@tanstack/react-query";
+import { useMemo, useEffect } from "react";
 import { atom, useAtom } from "jotai";
-import { useInfiniteQuery } from "react-query";
-import { useMemo } from "react";
 
 const groupsStore = atom<IGroup[]>([]);
 const groupStore = atom<IGroup>();
@@ -21,6 +21,7 @@ export interface IUseGroupsProps {
 
 export const useGroups = (props?: IUseGroupsProps) => {
   const { id } = props ?? {};
+  const queryClient = useQueryClient();
 
   const [groups, setGroups] = useAtom(groupsStore);
   const [group, setGroup] = useAtom(groupStore);
@@ -33,76 +34,74 @@ export const useGroups = (props?: IUseGroupsProps) => {
         [member.user.id]: member.user,
       };
     }, {});
-  }, []);
+  }, [members]);
 
   const {
     fetchNextPage,
     hasNextPage,
     isFetching: isFetchingPaginated,
     isFetchingNextPage,
-  } = useInfiniteQuery<IPaginatedResponse<IGroup>, Error>(
-    ["groups"],
-    ({ pageParam = 1 }) =>
+    data,
+  } = useInfiniteQuery({
+    queryKey: ["groups"],
+    queryFn: async ({ pageParam }) =>
       groupsService.paginated({
-        page: pageParam,
+        page: pageParam as number,
         orderBy: "createdAt",
         orderDir: "DESC",
       }),
-    {
-      getNextPageParam: (lastPage, allPages) => {
-        // Assuming 10 items per page, if less than 10, no more pages
-        if ((lastPage.data?.length ?? 0) === 10) {
-          return allPages.length + 1;
-        }
-        return undefined;
-      },
-      onSuccess: (result) => {
-        // Flatten all pages' data into a single array
-        const allGroups = result.pages.flatMap((page) => page.data);
-        setGroups(allGroups);
-      },
+    getNextPageParam: (lastPage: IPaginatedResponse<IGroup>, allPages: IPaginatedResponse<IGroup>[]) => {
+      if ((lastPage.data?.length ?? 0) === 10) {
+        return allPages.length + 1;
+      }
+      return undefined;
+    },
+    initialPageParam: 1,
+  });
+
+  useEffect(() => {
+    if (data?.pages) {
+      const allGroups = data.pages.flatMap((page) => page.data ?? []);
+      setGroups(allGroups);
     }
-  );
+  }, [data, setGroups]);
 
-  const { isFetching: isFetchingGroup, refetch } = useQuery<IGroup, Error>(
-    ["group", id],
-    () => groupsService.get(id!),
-    {
-      enabled: !!id,
-      onSuccess: setGroup,
-      cacheTime: 0,
-    }
-  );
+  const { isFetching: isFetchingGroup, refetch } = useQuery({
+    queryKey: ["group", id],
+    queryFn: () => groupsService.get(id!),
+    enabled: !!id,
+    select: (data) => {
+      setGroup(data);
+      return data;
+    },
+  });
 
-  const { mutate: create, isLoading: isCreating } = useMutation<
-    IGroup,
-    Error,
-    TCreateGroupInput
-  >((input: TCreateGroupInput) => groupsService.create(input));
+  const { mutate: create, isPending: isCreating } = useMutation({
+    mutationFn: (input: TCreateGroupInput) => groupsService.create(input),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["groups"] });
+    },
+  });
 
-  const { mutate: update, isLoading: isUpdating } = useMutation<
-    IGroup,
-    Error,
-    TUpdateGroupInput
-  >((input: TUpdateGroupInput) => groupsService.update(id!, input));
+  const { mutate: update, isPending: isUpdating } = useMutation({
+    mutationFn: (input: TUpdateGroupInput) => groupsService.update(id!, input),
+  });
 
-  const { mutate: remove, isLoading: isRemoving } = useMutation<IGroup, Error>(
-    () => groupsService.delete(id!)
-  );
+  const { mutate: remove, isPending: isRemoving } = useMutation({
+    mutationFn: () => groupsService.delete(id!),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["groups"] });
+    },
+  });
 
-  const { mutate: addMembers, isLoading: isAddingMembers } = useMutation<
-    void,
-    Error,
-    TAddGroupMembersInput
-  >((input: TAddGroupMembersInput) => groupsService.addMembers(id!, input));
+  const { mutate: addMembers, isPending: isAddingMembers } = useMutation({
+    mutationFn: (input: TAddGroupMembersInput) => groupsService.addMembers(id!, input),
+  });
 
-  const { mutate: removeMembers, isLoading: isRemovingMembers } = useMutation<
-    void,
-    Error,
-    TRemoveGroupMembersInput
-  >((input: TRemoveGroupMembersInput) =>
-    groupsService.removeMembers(id!, input)
-  );
+  const { mutate: removeMembers, isPending: isRemovingMembers } = useMutation({
+    mutationFn: (input: TRemoveGroupMembersInput) =>
+      groupsService.removeMembers(id!, input),
+  });
 
   const isFetching = isFetchingPaginated || isFetchingGroup;
   const isLoading =

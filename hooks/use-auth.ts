@@ -9,7 +9,7 @@ import {
 } from "@/types";
 import { deleteToken, getToken, saveToken } from "@/utils";
 import { useEffect } from "react";
-import { useMutation, useQuery } from "react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { atom, useAtom } from "jotai";
 import { accessTokenStore, userStore } from "@/stores";
 import { useLocalSearchParams } from "expo-router";
@@ -23,59 +23,41 @@ export const useAuth = () => {
   const [user, setUser] = useAtom(userStore);
   const [isFetching, setIsFetching] = useAtom(isFetchingStore);
 
-  useQuery<IUser, Error>(
-    ["getUser", accessToken],
-    () => authService.getUser(),
-    {
-      enabled: !user && !!accessToken, // Only fetch when accessToken exists
-      onSuccess: setUser,
-      onError: async (err) => {
-        await deleteToken();
-        setIsFetching(false);
-      },
-      retry: 0,
-      staleTime: 5000,
-    }
-  );
-
-  const { mutate: register, isLoading: isRegistering } = useMutation<
-    IUser,
-    Error,
-    TRegisterInput
-  >(async (input: TRegisterInput) => {
-    const result = await authService.register(input);
-    return result;
+  useQuery({
+    queryKey: ["getUser", accessToken],
+    queryFn: () => authService.getUser(),
+    enabled: !user && !!accessToken,
+    staleTime: 5000,
+    select: (data) => {
+      setUser(data);
+      return data;
+    },
+    retry: 0,
   });
 
-  const { mutate: login, isLoading: isLoggingIn } = useMutation<
-    void,
-    Error,
-    TLoginInput
-  >((input: TLoginInput) => authService.login(input));
+  const { mutate: register, isPending: isRegistering } = useMutation({
+    mutationFn: (input: TRegisterInput) => authService.register(input),
+  });
 
-  const { mutate: devLogin, isLoading: isDevLoggingIn } = useMutation<
-    { accessToken: string },
-    Error,
-    TLoginInput
-  >((input: TLoginInput) => authService.devLogin(input));
+  const { mutate: login, isPending: isLoggingIn } = useMutation({
+    mutationFn: (input: TLoginInput) => authService.login(input),
+  });
 
-  const { mutate: passwordReset, isLoading: isPasswordResetting } = useMutation<
-    void,
-    Error,
-    TPasswordResetInput
-  >((input: TPasswordResetInput) => authService.passwordReset(input));
+  const { mutate: devLogin, isPending: isDevLoggingIn } = useMutation({
+    mutationFn: (input: TLoginInput) => authService.devLogin(input),
+  });
 
-  const { mutate: updateUser, isLoading: isUpdatingAuthUser } = useMutation<
-    IUser,
-    Error,
-    TUpdateAuthUserInput
-  >((input: TUpdateAuthUserInput) => authService.updateUser(input));
+  const { mutate: passwordReset, isPending: isPasswordResetting } = useMutation({
+    mutationFn: (input: TPasswordResetInput) => authService.passwordReset(input),
+  });
 
-  const { mutate: changePassword, isLoading: isPasswordChanging } = useMutation<
-    void,
-    Error,
-    TChangePasswordInput
-  >((input: TChangePasswordInput) => authService.changePassword(input));
+  const { mutate: updateUser, isPending: isUpdatingAuthUser } = useMutation({
+    mutationFn: (input: TUpdateAuthUserInput) => authService.updateUser(input),
+  });
+
+  const { mutate: changePassword, isPending: isPasswordChanging } = useMutation({
+    mutationFn: (input: TChangePasswordInput) => authService.changePassword(input),
+  });
 
   const logout = () => {
     setAccessToken(undefined);
@@ -84,19 +66,16 @@ export const useAuth = () => {
   };
 
   const initToken = async () => {
-    // If accessTokenParam exists and is different from current accessToken, update it
     if (accessTokenParam && accessToken !== accessTokenParam) {
       await saveToken(accessTokenParam);
       setAccessToken(accessTokenParam);
       return;
     }
 
-    // If accessToken is already set, do nothing
     if (accessToken) {
       return;
     }
 
-    // Otherwise, try to get token from storage
     getToken().then((storedToken) => {
       if (storedToken) {
         setAccessToken(storedToken);

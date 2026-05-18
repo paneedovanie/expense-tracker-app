@@ -9,7 +9,7 @@ import { CreateGroupValidation } from "@/validations";
 import { TCreateGroupInput } from "@/types";
 import InputField from "@/components/forms/InputField";
 import { useToast } from "@/components/providers/ToastProvider";
-import { useQueryClient } from "react-query";
+import { useQueryClient } from "@tanstack/react-query";
 
 export default function AddGroupScreen() {
   const queryClient = useQueryClient();
@@ -25,7 +25,7 @@ export default function AddGroupScreen() {
   const submit = (input: TCreateGroupInput) => {
     create(input, {
       async onSuccess(group) {
-        queryClient.refetchQueries(["groups"]);
+        queryClient.refetchQueries({ queryKey: ["groups"] });
         router.replace({
           pathname: "/(app)/(groups)/view",
           params: { id: group.id },

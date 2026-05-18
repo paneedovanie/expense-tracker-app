@@ -26,26 +26,39 @@ export default function ExpenseSummaryScreen() {
 
   const extractAsPdf = useCallback(async () => {
     if (!expense?.group) return;
-    // On iOS/android prints the given html. On web prints the HTML from the current page.
-    const { uri } = await Print.printToFileAsync({
-      html,
-      width: 400 + 80 * expense.group.members.length,
-    });
+    try {
+      // On iOS/android prints the given html. On web prints the HTML from the current page.
+      const { uri } = await Print.printToFileAsync({
+        html,
+        width: 400 + 80 * expense.group.members.length,
+      });
 
-    // New file name
-    const newFileName = `${FileSystem.documentDirectory}${
-      expense.description
-    }_${dayjs().format("MM-DD-YYYY")}.pdf`;
+      // Move the generated PDF to the target location using the new File API
+      const sourceFile = new FileSystem.File(uri);
+      // Sanitize filename to avoid invalid characters
+      const safeName = expense.description.replace(/[^a-zA-Z0-9 _-]/g, '_');
+      const targetFile = new FileSystem.File(
+        FileSystem.Paths.cache,
+        `${safeName}_${dayjs().format("MM-DD-YYYY")}.pdf`
+      );
+      
+      // Delete existing file if it exists to prevent FileAlreadyExistsException
+      if (targetFile.exists) {
+        targetFile.delete();
+      }
+      
+      sourceFile.move(targetFile);
 
-    // Rename the PDF file
-    await FileSystem.moveAsync({
-      from: uri,
-      to: newFileName,
-    });
-
-    console.log("File has been saved to:", newFileName);
-    await shareAsync(newFileName, { UTI: ".pdf", mimeType: "application/pdf" });
-  }, [expense?.group, html]);
+      console.log("File has been saved to:", targetFile.uri);
+      await shareAsync(targetFile.uri, {
+        UTI: ".pdf",
+        mimeType: "application/pdf",
+      });
+    } catch (error) {
+      console.error("Error exporting PDF:", error);
+      Alert.alert("Export Failed", "Could not export the summary as PDF.");
+    }
+  }, [expense?.group, expense?.description, html]);
 
   const handleMessage = useCallback((event: WebViewMessageEvent) => {
     const data = event.nativeEvent.data;
@@ -56,28 +69,23 @@ export default function ExpenseSummaryScreen() {
     if (!expense?.group || !webviewRef.current) return;
 
     try {
-      // New file name
-      const newFileName = `${FileSystem.documentDirectory}${
-        expense.description
-      }_${dayjs().format("MM-DD-YYYY")}.jpeg`;
-
-      // Rename the PDF file
-      await FileSystem.writeAsStringAsync(
-        newFileName,
-        (base64Image ?? "").replace(/^data:image\/jpeg;base64,/, ""),
-        {
-          encoding: FileSystem.EncodingType.Base64,
-        }
+      // Write image using new File API
+      const file = new FileSystem.File(
+        FileSystem.Paths.cache,
+        `${expense.description}_${dayjs().format("MM-DD-YYYY")}.jpeg`
       );
+      file.write((base64Image ?? "").replace(/^data:image\/jpeg;base64,/, ""), {
+        encoding: "base64",
+      });
 
-      console.log("File has been saved to:", newFileName);
-      await shareAsync(newFileName, {
+      console.log("File has been saved to:", file.uri);
+      await shareAsync(file.uri, {
         mimeType: "image/jpeg",
       });
     } catch (error) {
       console.error("Error capturing webview as image:", error);
     }
-  }, [expense?.group, html, webviewRef.current]);
+  }, [expense?.group, expense?.description, html, base64Image]);
 
   const extract = useCallback(async () => {
     if (!expense?.group || !webviewRef.current) return;

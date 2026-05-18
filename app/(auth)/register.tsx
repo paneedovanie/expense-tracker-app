@@ -58,11 +58,11 @@ export default function RegisterScreen() {
             )}
           />
           <InputField
-            label="First Name *"
+            label="Fullname *"
             name="fullName"
-            placeholder="Enter your first name"
+            placeholder="Enter your full name"
             disabled={isLoading}
-            accessibilityLabel="First name input"
+            accessibilityLabel="Fullname input"
             autoCapitalize="words"
           />
 

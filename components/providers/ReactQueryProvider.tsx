@@ -1,4 +1,4 @@
-import { QueryClient, QueryClientProvider } from "react-query";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ReactNode } from "react";
 import { useToast } from "./ToastProvider";
 import { join } from "lodash";
@@ -24,16 +24,7 @@ export default function ReactQueryProvider({
     });
   };
 
-  const queryClient = new QueryClient({
-    defaultOptions: {
-      queries: {
-        onError,
-      },
-      mutations: {
-        onError,
-      },
-    },
-  });
+const queryClient = new QueryClient();
 
   return (
     // Provide the client to your App

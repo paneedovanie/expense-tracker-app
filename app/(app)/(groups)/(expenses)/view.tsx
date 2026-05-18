@@ -16,7 +16,7 @@ import { formatCurrency, getExpenseAmount, getPaidForMapper } from "@/utils";
 import { useToast } from "@/components/providers/ToastProvider";
 import { forEach } from "lodash";
 import ExpenseForm from "@/components/forms/ExpenseForm";
-import { useQueryClient } from "react-query";
+import { useQueryClient } from "@tanstack/react-query";
 
 export default function ViewExpenseScreen() {
   const queryClient = useQueryClient();
@@ -85,7 +85,7 @@ export default function ViewExpenseScreen() {
           onPress: () => {
             remove(undefined, {
               onSuccess: async () => {
-                await queryClient.refetchQueries(["expenses", groupId]);
+                await queryClient.refetchQueries({ queryKey: ["expenses", groupId] });
                 router.back();
                 toast.showToast({
                   status: "success",
@@ -142,7 +142,7 @@ export default function ViewExpenseScreen() {
           onSubmit={(input) =>
             update(input, {
               onSuccess: () => {
-                queryClient.invalidateQueries(["expenses", groupId]);
+                queryClient.invalidateQueries({ queryKey: ["expenses", groupId] });
                 toast.showToast({
                   status: "success",
                   message: `Expense updated successfully`,
