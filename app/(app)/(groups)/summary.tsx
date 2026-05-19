@@ -1,3 +1,4 @@
+'use client';
 import { shareAsync } from "expo-sharing";
 import { Alert, StyleSheet } from "react-native";
 import { useLocalSearchParams, useNavigation } from "expo-router";
