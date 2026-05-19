@@ -92,7 +92,7 @@ android {
         applicationId 'com.paneedovanie.expensetrackerapp'
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 6
+        versionCode 1
         versionName "1.0.5"
     }
     signingConfigs {
