@@ -1,7 +1,8 @@
 "use client";
-import { Alert, StyleSheet } from "react-native";
+import { Alert, StyleSheet, View } from "react-native";
 import { useLocalSearchParams, useNavigation } from "expo-router";
 import { useExpenses, useGroups, useExport } from "@/hooks";
+import { captureImageScript } from "@/hooks/use-export";
 import { generateGroupSummaryHtml } from "@/utils";
 import { Button, Layout, Spinner, Text, useTheme } from "@ui-kitten/components";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -15,6 +16,7 @@ export default function GroupSummaryScreen() {
   const navigation = useNavigation();
   const webviewRef = useRef(null);
   const [base64Image, setBase64Image] = useState<string | null>(null);
+  const [webViewError, setWebViewError] = useState<string | null>(null);
 
   const { group, isFetching: isFetchingGroup } = useGroups({
     id: groupId as string,
@@ -25,7 +27,7 @@ export default function GroupSummaryScreen() {
   });
 
   const html =
-    (group && generateGroupSummaryHtml(theme, group, expenses)) ?? "";
+    (group && expenses && generateGroupSummaryHtml(theme, group, expenses)) ?? "";
 
   const { exportAsPdf, exportAsImage, isExportingPdf, isExportingImage } =
     useExport({
@@ -35,8 +37,21 @@ export default function GroupSummaryScreen() {
 
   const handleMessage = useCallback((event: WebViewMessageEvent) => {
     const data = event.nativeEvent.data;
-    setBase64Image(data);
+    if (data.startsWith("ERROR:")) {
+      console.error("WebView capture error:", data);
+      Alert.alert("Capture Failed", data.replace("ERROR:", ""));
+    } else {
+      setBase64Image(data);
+    }
   }, []);
+
+  const handleError = useCallback(
+    (e: { nativeEvent: { description: string } }) => {
+      console.error("WebView error:", e.nativeEvent.description);
+      setWebViewError(e.nativeEvent.description);
+    },
+    []
+  );
 
   const extractAsPdf = useCallback(async () => {
     if (!html) return;
@@ -53,24 +68,20 @@ export default function GroupSummaryScreen() {
   const extract = useCallback(async () => {
     if (!expenses || !webviewRef.current) return;
 
-    Alert.alert(
-      "Export Summary",
-      "Choose export format",
-      [
-        {
-          text: "Cancel",
-          style: "cancel",
-        },
-        {
-          text: "As PDF",
-          onPress: extractAsPdf,
-        },
-        {
-          text: "As Image",
-          onPress: extractAsImage,
-        },
-      ]
-    );
+    Alert.alert("Export Summary", "Choose export format", [
+      {
+        text: "Cancel",
+        style: "cancel",
+      },
+      {
+        text: "As PDF",
+        onPress: extractAsPdf,
+      },
+      {
+        text: "As Image",
+        onPress: extractAsImage,
+      },
+    ]);
   }, [expenses, extractAsPdf, extractAsImage]);
 
   useEffect(() => {
@@ -115,22 +126,48 @@ export default function GroupSummaryScreen() {
   }
 
   return (
-    <WebView
-      ref={webviewRef}
-      originWhitelist={["*"]}
-      source={{ html }}
-      style={{ flex: 1 }}
-      onMessage={handleMessage}
-      allowsBackForwardNavigationGestures={false}
-    />
+    <View style={styles.container}>
+      {webViewError && (
+        <Layout style={styles.errorBanner}>
+          <Text status="danger">WebView error: {webViewError}</Text>
+        </Layout>
+      )}
+      <WebView
+        ref={webviewRef}
+        originWhitelist={["*"]}
+        source={{ html }}
+        injectedJavaScript={captureImageScript}
+        style={styles.webview}
+        containerStyle={styles.webviewContainer}
+        onMessage={handleMessage}
+        onError={handleError}
+        onLoadEnd={() => console.log("GroupSummary WebView loaded")}
+        allowsBackForwardNavigationGestures={false}
+        nestedScrollEnabled={true}
+        androidLayerType="software"
+      />
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
+  webview: {
+    flex: 1,
+  },
+  webviewContainer: {
+    flex: 1,
+  },
   centered: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
     backgroundColor: "#fff",
+  },
+  errorBanner: {
+    padding: 8,
+    backgroundColor: "#ffebee",
   },
 });

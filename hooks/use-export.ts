@@ -5,6 +5,25 @@ import * as Sharing from "expo-sharing";
 import { Alert } from "react-native";
 import dayjs from "dayjs";
 
+export const captureImageScript =
+  "(function(){" +
+  "var retries=20;" +
+  "function attempt(){" +
+  "var node=document.querySelector('#body');" +
+  "if(!node){window.ReactNativeWebView.postMessage('ERROR:#body not found');return;}" +
+  "window.domtoimage.toJpeg(node,{quality:0.95})" +
+  ".then(function(dataUrl){window.ReactNativeWebView.postMessage(dataUrl);})" +
+  ".catch(function(err){window.ReactNativeWebView.postMessage('ERROR:'+err.message);});" +
+  "}" +
+  "function check(){" +
+  "if(window.domtoimage){attempt();}" +
+  "else if(retries-->0){setTimeout(check,200);}" +
+  "else{window.ReactNativeWebView.postMessage('ERROR:domtoimage failed to load');}" +
+  "}" +
+  "check();" +
+  "})();" +
+  "true;";
+
 interface UseExportProps {
   groupName: string;
   memberCount: number;

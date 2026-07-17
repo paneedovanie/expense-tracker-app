@@ -3,6 +3,7 @@ import { ThemeType } from "@ui-kitten/components";
 import { forEach, join, map, reduce, round } from "lodash";
 import { getGroupMemberFullname } from "./group";
 import { formatCurrency } from "./number";
+import { domtoimageLib } from "@/utils/domtoimage";
 import dayjs from "dayjs";
 
 export const getPaidByMapper = (expense: IExpense) =>
@@ -215,18 +216,7 @@ export const generateExpenseSummaryHtml = (
             </tbody>
           </table>
         </div>
-        <script src="https://cdn.jsdelivr.net/npm/dom-to-image@2.6.0/dist/dom-to-image.min.js"></script>
-        <script>
-          (async () => {
-            const node = document.querySelector('#body');
-            try {
-              const dataUrl = await window.domtoimage.toJpeg(node, { quality: 0.95 });
-              window.ReactNativeWebView.postMessage(dataUrl);
-            } catch (error) {
-              window.ReactNativeWebView.postMessage(error.message);
-            }
-          })();
-        </script>
+        <script>${domtoimageLib}</script>
       </body>
     </html>
     `;
