@@ -2,30 +2,28 @@
 import { StyleSheet, View } from "react-native";
 import { useLocalSearchParams, useNavigation } from "expo-router";
 import { useExpenses, useExport } from "@/hooks";
-import { captureImageScript } from "@/hooks/use-export";
 import { generateExpenseSummaryHtml } from "@/utils";
 import { Button, Layout, Spinner, Text, useTheme } from "@ui-kitten/components";
-import { useCallback, useEffect, useRef, useState } from "react";
-import { BackHandler } from "react-native";
-import { WebView, WebViewMessageEvent } from "react-native-webview";
-import { Alert } from "react-native";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { BackHandler, Alert } from "react-native";
+import SummaryTable from "@/components/groups/SummaryTable";
+import ImageCaptureView, { ImageCaptureRef } from "@/components/groups/ImageCaptureView";
 
 export default function ExpenseSummaryScreen() {
   const theme = useTheme();
   const { expenseId } = useLocalSearchParams();
   const navigation = useNavigation();
-  const webviewRef = useRef(null);
-  const [base64Image, setBase64Image] = useState<string | null>(null);
-  const [webViewError, setWebViewError] = useState<string | null>(null);
+  const imageCaptureRef = useRef<ImageCaptureRef>(null);
+  const [isCapturing, setIsCapturing] = useState(false);
 
   const { expense, isFetching } = useExpenses({
     id: expenseId as string,
   });
 
-  const html =
-    expense?.group && expense
-      ? generateExpenseSummaryHtml(theme, expense)
-      : "";
+  const html = useMemo(
+    () => (expense?.group ? generateExpenseSummaryHtml(theme, expense) : ""),
+    [expense, theme]
+  );
 
   const { exportAsPdf, exportAsImage, isExportingPdf, isExportingImage } =
     useExport({
@@ -33,38 +31,35 @@ export default function ExpenseSummaryScreen() {
       memberCount: expense?.group?.members.length ?? 0,
     });
 
-  const handleMessage = useCallback((event: WebViewMessageEvent) => {
-    const data = event.nativeEvent.data;
-    if (data.startsWith("ERROR:")) {
-      console.error("WebView capture error:", data);
-      Alert.alert("Capture Failed", data.replace("ERROR:", ""));
-    } else {
-      setBase64Image(data);
-    }
-  }, []);
-
-  const handleError = useCallback(
-    (e: { nativeEvent: { description: string } }) => {
-      console.error("WebView error:", e.nativeEvent.description);
-      setWebViewError(e.nativeEvent.description);
-    },
-    []
-  );
-
   const extractAsPdf = useCallback(async () => {
     if (!html) return;
     await exportAsPdf(html);
   }, [html, exportAsPdf]);
 
   const extractAsImage = useCallback(async () => {
-    if (!base64Image || !webviewRef.current) return;
+    if (!html || !imageCaptureRef.current) return;
 
-    const cleanBase64 = base64Image.replace(/^data:image\/jpeg;base64,/, "");
-    await exportAsImage(cleanBase64, expense?.description ?? "export");
-  }, [base64Image, exportAsImage, expense?.description]);
+    setIsCapturing(true);
+    try {
+      const webViewWidth = 400 + 80 * (expense?.group?.members.length ?? 0);
+      const webViewHeight = 600 + (expense?.group?.members.length ?? 0) * 40;
+
+      const base64Image = await imageCaptureRef.current.captureImage(
+        html,
+        webViewWidth,
+        webViewHeight
+      );
+      await exportAsImage(base64Image, expense?.description ?? "export");
+    } catch (error) {
+      console.error("Error capturing image:", error);
+      Alert.alert("Export Failed", "Could not capture the image.");
+    } finally {
+      setIsCapturing(false);
+    }
+  }, [html, expense?.description, expense?.group?.members.length, exportAsImage]);
 
   const extract = useCallback(async () => {
-    if (!expense?.group || !webviewRef.current) return;
+    if (!expense?.group) return;
 
     Alert.alert(
       "Export Summary",
@@ -92,13 +87,13 @@ export default function ExpenseSummaryScreen() {
         <Button
           appearance="ghost"
           onPress={extract}
-          disabled={isExportingPdf || isExportingImage}
+          disabled={isExportingPdf || isExportingImage || isCapturing}
         >
           Export
         </Button>
       ),
     });
-  }, [navigation, extract, isExportingPdf, isExportingImage]);
+  }, [navigation, extract, isExportingPdf, isExportingImage, isCapturing]);
 
   useEffect(() => {
     const backHandler = BackHandler.addEventListener(
@@ -129,24 +124,10 @@ export default function ExpenseSummaryScreen() {
 
   return (
     <View style={styles.container}>
-      {webViewError && (
-        <Layout style={styles.errorBanner}>
-          <Text status="danger">WebView error: {webViewError}</Text>
-        </Layout>
-      )}
-      <WebView
-        ref={webviewRef}
-        originWhitelist={["*"]}
-        source={{ html }}
-        injectedJavaScript={captureImageScript}
-        style={styles.webview}
-        containerStyle={styles.webviewContainer}
-        onMessage={handleMessage}
-        onError={handleError}
-        onLoadEnd={() => console.log("ExpenseSummary WebView loaded")}
-        allowsBackForwardNavigationGestures={false}
-        nestedScrollEnabled={true}
-        androidLayerType="software"
+      <SummaryTable group={expense.group} expenses={[expense]} />
+      <ImageCaptureView
+        ref={imageCaptureRef}
+        memberCount={expense.group.members.length}
       />
     </View>
   );
@@ -156,20 +137,10 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  webview: {
-    flex: 1,
-  },
-  webviewContainer: {
-    flex: 1,
-  },
   centered: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
     backgroundColor: "#fff",
-  },
-  errorBanner: {
-    padding: 8,
-    backgroundColor: "#ffebee",
   },
 });

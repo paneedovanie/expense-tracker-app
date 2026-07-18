@@ -1,28 +1,10 @@
 import { useCallback, useState } from "react";
-import * as Print from "expo-print";
+import { File, Paths } from "expo-file-system";
 import * as FileSystemLegacy from "expo-file-system/legacy";
 import * as Sharing from "expo-sharing";
 import { Alert } from "react-native";
+import * as Print from "expo-print";
 import dayjs from "dayjs";
-
-export const captureImageScript =
-  "(function(){" +
-  "var retries=20;" +
-  "function attempt(){" +
-  "var node=document.querySelector('#body');" +
-  "if(!node){window.ReactNativeWebView.postMessage('ERROR:#body not found');return;}" +
-  "window.domtoimage.toJpeg(node,{quality:0.95})" +
-  ".then(function(dataUrl){window.ReactNativeWebView.postMessage(dataUrl);})" +
-  ".catch(function(err){window.ReactNativeWebView.postMessage('ERROR:'+err.message);});" +
-  "}" +
-  "function check(){" +
-  "if(window.domtoimage){attempt();}" +
-  "else if(retries-->0){setTimeout(check,200);}" +
-  "else{window.ReactNativeWebView.postMessage('ERROR:domtoimage failed to load');}" +
-  "}" +
-  "check();" +
-  "})();" +
-  "true;";
 
 interface UseExportProps {
   groupName: string;
@@ -35,7 +17,10 @@ export function useExport({ groupName, memberCount }: UseExportProps) {
 
   const exportAsPdf = useCallback(
     async (html: string) => {
-      if (!html) return;
+      if (!html || html.trim() === "") {
+        Alert.alert("Error", "No content to export.");
+        return;
+      }
 
       setIsExportingPdf(true);
       try {
@@ -45,18 +30,19 @@ export function useExport({ groupName, memberCount }: UseExportProps) {
         });
 
         const safeName = groupName.replace(/[^a-zA-Z0-9 _-]/g, "_");
-        const targetUri =
-          FileSystemLegacy.cacheDirectory +
-          `${safeName}_${dayjs().format("MM-DD-YYYY")}.pdf`;
+        const targetFile = new File(
+          Paths.cache,
+          `${safeName}_${dayjs().format("MM-DD-YYYY")}.pdf`
+        );
 
-        const info = await FileSystemLegacy.getInfoAsync(targetUri);
-        if (info.exists) {
-          await FileSystemLegacy.deleteAsync(targetUri, { idempotent: true });
+        if (targetFile.exists) {
+          targetFile.delete();
         }
 
-        await FileSystemLegacy.moveAsync({ from: uri, to: targetUri });
+        const sourceFile = new File(uri);
+        sourceFile.copy(targetFile);
 
-        await Sharing.shareAsync(targetUri, {
+        await Sharing.shareAsync(targetFile.uri, {
           mimeType: "application/pdf",
           UTI: "com.adobe.pdf",
         });
@@ -73,22 +59,27 @@ export function useExport({ groupName, memberCount }: UseExportProps) {
   const exportAsImage = useCallback(
     async (base64Data: string, fileName: string) => {
       if (!base64Data) {
-        Alert.alert("No Image", "Please capture an image first.");
+        Alert.alert("Error", "No image data.");
         return;
       }
 
       setIsExportingImage(true);
       try {
         const safeName = fileName.replace(/[^a-zA-Z0-9 _-]/g, "_");
-        const fileUri =
+        const targetUri =
           FileSystemLegacy.cacheDirectory +
-          `${safeName}_${dayjs().format("MM-DD-YYYY")}.jpeg`;
+          `${safeName}_${dayjs().format("MM-DD-YYYY")}.jpg`;
 
-        await FileSystemLegacy.writeAsStringAsync(fileUri, base64Data, {
+        const info = await FileSystemLegacy.getInfoAsync(targetUri);
+        if (info.exists) {
+          await FileSystemLegacy.deleteAsync(targetUri, { idempotent: true });
+        }
+
+        await FileSystemLegacy.writeAsStringAsync(targetUri, base64Data, {
           encoding: FileSystemLegacy.EncodingType.Base64,
         });
 
-        await Sharing.shareAsync(fileUri, {
+        await Sharing.shareAsync(targetUri, {
           mimeType: "image/jpeg",
         });
       } catch (error) {

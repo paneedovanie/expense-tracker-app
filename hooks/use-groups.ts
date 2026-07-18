@@ -66,15 +66,17 @@ export const useGroups = (props?: IUseGroupsProps) => {
     }
   }, [data, setGroups]);
 
-  const { isFetching: isFetchingGroup, refetch } = useQuery({
+  const { isFetching: isFetchingGroup, refetch, data: groupData } = useQuery({
     queryKey: ["group", id],
     queryFn: () => groupsService.get(id!),
     enabled: !!id,
-    select: (data) => {
-      setGroup(data);
-      return data;
-    },
   });
+
+  useEffect(() => {
+    if (groupData) {
+      setGroup(groupData);
+    }
+  }, [groupData, setGroup]);
 
   const { mutate: create, isPending: isCreating } = useMutation({
     mutationFn: (input: TCreateGroupInput) => groupsService.create(input),

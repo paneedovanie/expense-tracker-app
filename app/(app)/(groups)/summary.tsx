@@ -1,22 +1,23 @@
 "use client";
-import { Alert, StyleSheet, View } from "react-native";
+import { StyleSheet, View, useWindowDimensions } from "react-native";
 import { useLocalSearchParams, useNavigation } from "expo-router";
 import { useExpenses, useGroups, useExport } from "@/hooks";
-import { captureImageScript } from "@/hooks/use-export";
 import { generateGroupSummaryHtml } from "@/utils";
 import { Button, Layout, Spinner, Text, useTheme } from "@ui-kitten/components";
-import { useCallback, useEffect, useRef, useState } from "react";
-import { BackHandler } from "react-native";
-import { WebView, WebViewMessageEvent } from "react-native-webview";
-import dayjs from "dayjs";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { BackHandler, Alert } from "react-native";
+import SummaryTable from "@/components/groups/SummaryTable";
+import ImageCaptureView, {
+  ImageCaptureRef,
+} from "@/components/groups/ImageCaptureView";
 
 export default function GroupSummaryScreen() {
   const theme = useTheme();
   const { groupId } = useLocalSearchParams();
   const navigation = useNavigation();
-  const webviewRef = useRef(null);
-  const [base64Image, setBase64Image] = useState<string | null>(null);
-  const [webViewError, setWebViewError] = useState<string | null>(null);
+  const imageCaptureRef = useRef<ImageCaptureRef>(null);
+  const { width: screenWidth, height: screenHeight } = useWindowDimensions();
+  const [isCapturing, setIsCapturing] = useState(false);
 
   const { group, isFetching: isFetchingGroup } = useGroups({
     id: groupId as string,
@@ -26,8 +27,11 @@ export default function GroupSummaryScreen() {
     groupId: groupId as string,
   });
 
-  const html =
-    (group && expenses && generateGroupSummaryHtml(theme, group, expenses)) ?? "";
+  const html = useMemo(
+    () =>
+      group && expenses ? generateGroupSummaryHtml(theme, group, expenses) : "",
+    [group, expenses, theme]
+  );
 
   const { exportAsPdf, exportAsImage, isExportingPdf, isExportingImage } =
     useExport({
@@ -35,38 +39,35 @@ export default function GroupSummaryScreen() {
       memberCount: group?.members.length ?? 0,
     });
 
-  const handleMessage = useCallback((event: WebViewMessageEvent) => {
-    const data = event.nativeEvent.data;
-    if (data.startsWith("ERROR:")) {
-      console.error("WebView capture error:", data);
-      Alert.alert("Capture Failed", data.replace("ERROR:", ""));
-    } else {
-      setBase64Image(data);
-    }
-  }, []);
-
-  const handleError = useCallback(
-    (e: { nativeEvent: { description: string } }) => {
-      console.error("WebView error:", e.nativeEvent.description);
-      setWebViewError(e.nativeEvent.description);
-    },
-    []
-  );
-
   const extractAsPdf = useCallback(async () => {
     if (!html) return;
     await exportAsPdf(html);
   }, [html, exportAsPdf]);
 
   const extractAsImage = useCallback(async () => {
-    if (!base64Image || !webviewRef.current) return;
+    if (!html || !imageCaptureRef.current) return;
 
-    const cleanBase64 = base64Image.replace(/^data:image\/jpeg;base64,/, "");
-    await exportAsImage(cleanBase64, group?.name ?? "export");
-  }, [base64Image, exportAsImage, group?.name]);
+    setIsCapturing(true);
+    try {
+      const webViewWidth = 400 + 80 * (group?.members.length ?? 0);
+      const webViewHeight = 600 + (group?.members.length ?? 0) * 40;
+
+      const base64Image = await imageCaptureRef.current.captureImage(
+        html,
+        webViewWidth,
+        webViewHeight
+      );
+      await exportAsImage(base64Image, group?.name ?? "export");
+    } catch (error) {
+      console.error("Error capturing image:", error);
+      Alert.alert("Export Failed", "Could not capture the image.");
+    } finally {
+      setIsCapturing(false);
+    }
+  }, [html, group?.name, group?.members.length, exportAsImage]);
 
   const extract = useCallback(async () => {
-    if (!expenses || !webviewRef.current) return;
+    if (!expenses) return;
 
     Alert.alert("Export Summary", "Choose export format", [
       {
@@ -90,13 +91,13 @@ export default function GroupSummaryScreen() {
         <Button
           appearance="ghost"
           onPress={extract}
-          disabled={isExportingPdf || isExportingImage}
+          disabled={isExportingPdf || isExportingImage || isCapturing}
         >
           Export
         </Button>
       ),
     });
-  }, [navigation, extract, isExportingPdf, isExportingImage]);
+  }, [navigation, extract, isExportingPdf, isExportingImage, isCapturing]);
 
   useEffect(() => {
     const backHandler = BackHandler.addEventListener(
@@ -127,24 +128,10 @@ export default function GroupSummaryScreen() {
 
   return (
     <View style={styles.container}>
-      {webViewError && (
-        <Layout style={styles.errorBanner}>
-          <Text status="danger">WebView error: {webViewError}</Text>
-        </Layout>
-      )}
-      <WebView
-        ref={webviewRef}
-        originWhitelist={["*"]}
-        source={{ html }}
-        injectedJavaScript={captureImageScript}
-        style={styles.webview}
-        containerStyle={styles.webviewContainer}
-        onMessage={handleMessage}
-        onError={handleError}
-        onLoadEnd={() => console.log("GroupSummary WebView loaded")}
-        allowsBackForwardNavigationGestures={false}
-        nestedScrollEnabled={true}
-        androidLayerType="software"
+      <SummaryTable group={group} expenses={expenses ?? []} />
+      <ImageCaptureView
+        ref={imageCaptureRef}
+        memberCount={group.members.length}
       />
     </View>
   );
@@ -154,20 +141,10 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  webview: {
-    flex: 1,
-  },
-  webviewContainer: {
-    flex: 1,
-  },
   centered: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
     backgroundColor: "#fff",
-  },
-  errorBanner: {
-    padding: 8,
-    backgroundColor: "#ffebee",
   },
 });
