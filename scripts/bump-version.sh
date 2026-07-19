@@ -1,7 +1,8 @@
 #!/bin/bash
-cd "$(dirname "$0")/.."
+REPO_ROOT="$(git rev-parse --show-toplevel)"
+cd "$REPO_ROOT"
 
-VERSION=$(node -e "const app = require('../app.json'); console.log(app.expo.version)")
+VERSION=$(node -e "const app = require('./app.json'); console.log(app.expo.version)")
 IFS='.' read -ra PARTS <<< "$VERSION"
 MAJOR="${PARTS[0]}"
 MINOR="${PARTS[1]}"
@@ -11,11 +12,11 @@ VERSION_CODE="$PATCH"
 
 node -e "
 const fs = require('fs');
-const app = JSON.parse(fs.readFileSync('..app.json', 'utf8'));
+const app = JSON.parse(fs.readFileSync('app.json', 'utf8'));
 app.expo.version = '$NEW_VERSION';
 if (!app.expo.android) app.expo.android = {};
 app.expo.android.versionCode = $VERSION_CODE;
-fs.writeFileSync('..app.json', JSON.stringify(app, null, 2) + '\n');
+fs.writeFileSync('app.json', JSON.stringify(app, null, 2) + '\n');
 "
 
 node -e "
