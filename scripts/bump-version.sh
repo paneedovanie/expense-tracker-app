@@ -1,7 +1,7 @@
 #!/bin/bash
 cd "$(dirname "$0")/.."
 
-VERSION=$(node -e "const app = require('./app.json'); console.log(app.expo.version)")
+VERSION=$(node -e "const app = require('../app.json'); console.log(app.expo.version)")
 IFS='.' read -ra PARTS <<< "$VERSION"
 MAJOR="${PARTS[0]}"
 MINOR="${PARTS[1]}"
