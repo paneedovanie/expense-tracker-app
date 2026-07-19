@@ -1,3 +1,1 @@
-import Constants from "expo-constants";
-
-export const apiBaseUrl = Constants.expoConfig?.extra?.apiBaseUrl;
+export const apiBaseUrl = process.env.EXPO_PUBLIC_API_BASE_URL;

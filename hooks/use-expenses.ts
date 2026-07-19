@@ -74,6 +74,7 @@ export const useExpenses = (props?: IUseExpensesProps) => {
     onSuccess: (expense) => {
       setExpense(expense);
       queryClient.invalidateQueries({ queryKey: ["expenses", groupId] });
+      queryClient.invalidateQueries({ queryKey: ["expense", expense.id] });
     },
   });
 

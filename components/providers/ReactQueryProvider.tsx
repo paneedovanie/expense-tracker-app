@@ -24,7 +24,16 @@ export default function ReactQueryProvider({
     });
   };
 
-const queryClient = new QueryClient();
+  const queryClient = new QueryClient({
+    defaultOptions: {
+      queries: {
+        throwOnError: true,
+        meta: {
+          onError,
+        },
+      },
+    },
+  });
 
   return (
     // Provide the client to your App

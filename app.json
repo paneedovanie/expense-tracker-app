@@ -2,7 +2,7 @@
   "expo": {
     "name": "Expense Tracker App",
     "slug": "expense-tracker-app",
-    "version": "1.0.10",
+    "version": "1.0.11",
     "orientation": "portrait",
     "icon": "./assets/images/playstore.png",
     "scheme": "expensetrackerapp",
@@ -49,7 +49,8 @@
           ],
           "category": ["BROWSABLE", "DEFAULT"]
         }
-      ]
+      ],
+      "versionCode": 13
     },
     "web": {
       "bundler": "metro",
@@ -60,8 +61,6 @@
     "experiments": {
       "typedRoutes": true
     },
-    "extra": {
-      "apiBaseUrl": "https://expense-tracker-api.hiramis.org"
-    }
+    "extra": {}
   }
 }

@@ -22,16 +22,20 @@ export default function AddExpenseScreen() {
       group={group}
       loading={isLoading}
       onSubmit={async (input) => {
-        await create(input);
-        router.replace({
-          pathname: "/(app)/(groups)/(expenses)/view",
-          params: {
-            groupId,
+        create(input, {
+          onSuccess: (expense) => {
+            router.replace({
+              pathname: "/(app)/(groups)/(expenses)/view",
+              params: {
+                groupId,
+                expenseId: expense.id,
+              },
+            });
+            toast.showToast({
+              status: "success",
+              message: `Expense created successfully`,
+            });
           },
-        });
-        toast.showToast({
-          status: "success",
-          message: `Expense created successfully`,
         });
       }}
     />

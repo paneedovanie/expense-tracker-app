@@ -6,16 +6,26 @@ import {
   getExpenseAmount,
   getGroupMemberFullname,
 } from "@/utils";
-import { router, useNavigation } from "expo-router";
+import { router } from "expo-router";
 import Avatar from "@/components/avatar/Avatar";
 import { IGroup } from "@/types";
+import { useFocusEffect } from "expo-router";
+import { useCallback } from "react";
 
 export interface IGroupViewExpensesProps {
   group: IGroup;
 }
 
 export default function GroupViewExpenses({ group }: IGroupViewExpensesProps) {
-  const { expenses, isFetching } = useExpenses({ groupId: group.id });
+  const { expenses, isFetching, refetchMany } = useExpenses({
+    groupId: group.id,
+  });
+
+  useFocusEffect(
+    useCallback(() => {
+      refetchMany();
+    }, [refetchMany])
+  );
 
   if (isFetching) {
     return (
