@@ -11,11 +11,11 @@ VERSION_CODE="$PATCH"
 
 node -e "
 const fs = require('fs');
-const app = JSON.parse(fs.readFileSync('app.json', 'utf8'));
+const app = JSON.parse(fs.readFileSync('..app.json', 'utf8'));
 app.expo.version = '$NEW_VERSION';
 if (!app.expo.android) app.expo.android = {};
 app.expo.android.versionCode = $VERSION_CODE;
-fs.writeFileSync('app.json', JSON.stringify(app, null, 2) + '\n');
+fs.writeFileSync('..app.json', JSON.stringify(app, null, 2) + '\n');
 "
 
 node -e "
