@@ -11,20 +11,20 @@
 
 ## Tech Stack
 
-| Category | Technology |
-|----------|------------|
-| Framework | Expo SDK 54 |
-| Routing | expo-router 5.0.6 (file-based, tab + stack navigation) |
-| UI Components | @ui-kitten/components 5.3.1 + @eva-design/eva 2.2.0 |
-| Global State | Jotai 2.12.5 (atoms for user + accessToken) |
-| Server State | TanStack React Query 5.60.0 |
-| Forms | react-hook-form 7.56.4 + @hookform/resolvers 5.0.1 |
-| Validation | Zod 3.25.36 |
-| Auth Storage | expo-secure-store 14.2.3 |
-| Animations | react-native-reanimated 3.17.4 |
-| PDF/Export | expo-print, expo-sharing, react-native-webview |
-| Date Handling | dayjs 1.11.13 |
-| i18n | react-native-localize, i18n-js |
+| Category      | Technology                                             |
+| ------------- | ------------------------------------------------------ |
+| Framework     | Expo SDK 54                                            |
+| Routing       | expo-router 5.0.6 (file-based, tab + stack navigation) |
+| UI Components | @ui-kitten/components 5.3.1 + @eva-design/eva 2.2.0    |
+| Global State  | Jotai 2.12.5 (atoms for user + accessToken)            |
+| Server State  | TanStack React Query 5.60.0                            |
+| Forms         | react-hook-form 7.56.4 + @hookform/resolvers 5.0.1     |
+| Validation    | Zod 3.25.36                                            |
+| Auth Storage  | expo-secure-store 14.2.3                               |
+| Animations    | react-native-reanimated 3.17.4                         |
+| PDF/Export    | expo-print, expo-sharing, react-native-webview         |
+| Date Handling | dayjs 1.11.13                                          |
+| i18n          | react-native-localize, i18n-js                         |
 
 ---
 
@@ -129,10 +129,12 @@ npm run test:watch  # Run Jest in watch mode
 ## Code Conventions
 
 ### Services
+
 - All services extend `BaseService` which provides:
   - `apiBaseUrl` from `constants/env.ts`
   - `applyAccessToken()` method that injects `Authorization: Bearer <token>` header
 - Example service pattern:
+
 ```typescript
 // services/groups.service.ts
 class GroupsService extends BaseService {
@@ -146,25 +148,30 @@ class GroupsService extends BaseService {
 ```
 
 ### React Query Hooks
+
 - Wrap service methods with React Query hooks in `hooks/use-*.ts`
 - Use `useInfiniteQuery` for paginated lists
 - Mutations return `useMutation` with `onSuccess`/`onError` callbacks
 
 ### Jotai Atoms
+
 - Only auth-related global state in `stores.ts`:
   - `userStore` — current user object
   - `accessTokenStore` — JWT token string
 
 ### Forms
+
 - Use `react-hook-form` with Zod resolver
 - Validation schemas live in `validations/*.validation.ts`
 - Form components in `components/forms/`
 
 ### File Handling
+
 - `utils/file.ts` converts files to `IFile` interface: `{ uri, name, type, size }`
 - File URLs: `${apiBaseUrl}/api/v1/files?key=${key}`
 
 ### HTML/PDF Export
+
 - `utils/group.ts` — `generateGroupSummaryHtml()`
 - `utils/expense.ts` — `generateExpenseSummaryHtml()`
 - Uses `expo-print` for PDF, `expo-sharing` for sharing
@@ -176,29 +183,41 @@ class GroupsService extends BaseService {
 Follow this pattern to add a new CRUD entity:
 
 ### Step 1: Types
+
 Add interfaces and types in `types/`:
+
 ```typescript
 // types/i-MyEntity.ts
-export interface IMyEntity { id: string; name: string; }
+export interface IMyEntity {
+  id: string;
+  name: string;
+}
 
 // types/t-my-entity.ts
-import { z } from 'zod';
+import { z } from "zod";
 export type TMyEntityInput = z.infer<typeof myEntitySchema>;
 
 // types/e-my-entity.ts
-export enum EMyEntityStatus { Active = 'Active', Inactive = 'Inactive' }
+export enum EMyEntityStatus {
+  Active = "Active",
+  Inactive = "Inactive",
+}
 ```
 
 ### Step 2: Validation
+
 Create `validations/my-entity.validation.ts`:
+
 ```typescript
-import { z } from 'zod';
+import { z } from "zod";
 export const createMyEntitySchema = z.object({ name: z.string().min(1) });
 export const updateMyEntitySchema = z.object({ name: z.string().min(1) });
 ```
 
 ### Step 3: Service
+
 Add to `services/my-entity.service.ts`:
+
 ```typescript
 class MyEntityService extends BaseService {
   async paginated(query?: IPaginatedQuery) {
@@ -218,12 +237,15 @@ export const myEntityService = new MyEntityService();
 ```
 
 ### Step 4: Hook
+
 Create `hooks/use-my-entities.ts`:
+
 ```typescript
 export function useMyEntities(query?: IPaginatedQuery) {
   return useInfiniteQuery({
-    queryKey: ['my-entities', query],
-    queryFn: ({ pageParam }) => myEntityService.paginated({ ...query, page: pageParam }),
+    queryKey: ["my-entities", query],
+    queryFn: ({ pageParam }) =>
+      myEntityService.paginated({ ...query, page: pageParam }),
     initialPageParam: 1,
     getNextPageParam: (lastPage) => lastPage.nextPage,
   });
@@ -231,12 +253,16 @@ export function useMyEntities(query?: IPaginatedQuery) {
 ```
 
 ### Step 5: Components
+
 Add UI in `components/my-entities/`:
+
 - `MyEntityList.tsx` — paginated list with infinite scroll
 - `MyEntityForm.tsx` — create/edit form with react-hook-form
 
 ### Step 6: Route
+
 Add pages in `app/(app)/(my-entities)/`:
+
 ```
 app/(app)/(my-entities)/
   index.tsx      # List view
@@ -246,7 +272,9 @@ app/(app)/(my-entities)/
 ```
 
 ### Step 7: Connect
+
 Wire form → hook → service → API:
+
 ```typescript
 // In form component
 const mutation = useMutation({ mutationFn: myEntityService.create, onSuccess: () => {...} });
@@ -259,12 +287,14 @@ const mutation = useMutation({ mutationFn: myEntityService.create, onSuccess: ()
 **Status**: No test framework currently configured.
 
 **Recommendation**: Install and configure:
+
 ```bash
 npm install --save-dev jest @testing-library/react-native @types/jest
 npx jest --init
 ```
 
 **Convention**: Place tests alongside source files:
+
 - `services/__tests__/groups.service.test.ts`
 - `hooks/__tests__/use-groups.test.ts`
 - `components/groups/__tests__/GroupCard.test.tsx`
@@ -278,16 +308,19 @@ npx jest --init
 - Translation files: `locales/en.json`, `locales/fil.json`
 
 ### Usage
+
 ```typescript
-import I18n from 'i18n-js';
-I18n.t('welcome_message');
-I18n.t('expense_category_food');
+import I18n from "i18n-js";
+I18n.t("welcome_message");
+I18n.t("expense_category_food");
 ```
 
 ### Adding Translations
+
 1. Add key to `locales/en.json` (source)
 2. Add corresponding key to `locales/fil.json`
 3. Use `I18n.t('key')` in components
 
 ### Device Locale
+
 The app detects device locale via `react-native-localize` and sets `I18n.locale` accordingly.
