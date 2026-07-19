@@ -7,9 +7,7 @@ MAJOR="${PARTS[0]}"
 MINOR="${PARTS[1]}"
 PATCH=$((PARTS[2] + 1))
 NEW_VERSION="$MAJOR.$MINOR.$PATCH"
-
-VERSION_CODE=$(node -e "const app = require('./app.json'); console.log(app.expo.android?.versionCode ?? 0)")
-VERSION_CODE=$((VERSION_CODE + 1))
+VERSION_CODE="$PATCH"
 
 node -e "
 const fs = require('fs');
