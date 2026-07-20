@@ -1,4 +1,9 @@
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import {
+  QueryClient,
+  QueryClientProvider,
+  QueryCache,
+  MutationCache,
+} from "@tanstack/react-query";
 import { ReactNode } from "react";
 import { useToast } from "./ToastProvider";
 import { join } from "lodash";
@@ -25,12 +30,23 @@ export default function ReactQueryProvider({
   };
 
   const queryClient = new QueryClient({
+    queryCache: new QueryCache({
+      onError: (error, query) => {
+        onError(error);
+      },
+    }),
+    mutationCache: new MutationCache({
+      onError: (error, mutation) => {
+        onError(error);
+      },
+    }),
     defaultOptions: {
       queries: {
-        throwOnError: true,
-        meta: {
-          onError,
-        },
+        throwOnError: false,
+        retry: false,
+      },
+      mutations: {
+        throwOnError: false,
       },
     },
   });
