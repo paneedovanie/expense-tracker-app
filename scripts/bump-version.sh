@@ -33,4 +33,12 @@ plist = plist.replace(/(<key>CFBundleVersion<\/key>\s*<string>)[^<]*(<\/string>)
 fs.writeFileSync('$REPO_ROOT/ios/ExpenseTrackerApp/Info.plist', plist);
 "
 
+node -e "
+const fs = require('fs');
+let gradle = fs.readFileSync('$REPO_ROOT/android/app/build.gradle', 'utf8');
+gradle = gradle.replace(/(versionCode\s+)\d+/, '\$1$VERSION_CODE');
+gradle = gradle.replace(/(versionName\s+)\"[^\"]+\"/, '\$1\"$NEW_VERSION\"');
+fs.writeFileSync('$REPO_ROOT/android/app/build.gradle', gradle);
+"
+
 echo "Bumped version: $VERSION -> $NEW_VERSION, versionCode -> $VERSION_CODE"
