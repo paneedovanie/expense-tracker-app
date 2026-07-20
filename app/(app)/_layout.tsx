@@ -38,8 +38,7 @@ const TabBar = ({ state, navigation }: BottomTabBarProps) => {
             style={[props?.style, styles.icon]}
           />
         )}
-        disabled
-        title="Add (TBD)"
+        title="Scan"
       />
       <BottomNavigationTab
         icon={(props) => (
@@ -69,7 +68,7 @@ export default function AppLayout() {
       screenOptions={{ tabBarShowLabel: false, headerShadowVisible: false }}
     >
       <Tabs.Screen name="(groups)" options={{ headerShown: false }} />
-      <Tabs.Screen name="add" options={{ headerTitle: "" }} />
+      <Tabs.Screen name="scan" options={{ headerTitle: "" }} />
       <Tabs.Screen name="(profile)" options={{ headerShown: false }} />
     </Tabs>
   );

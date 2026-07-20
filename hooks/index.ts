@@ -6,3 +6,4 @@ export * from "./use-users";
 export * from "./use-expenses";
 export * from "./use-payments";
 export * from "./use-export";
+export * from "./use-ocr";

@@ -27,3 +27,4 @@ export * from "./t-update-payment-input";
 export * from "./t-settle-up-input";
 export * from "./i-group-member";
 export * from "./e-discount-type";
+export * from "./i-ocr-result";

@@ -19,6 +19,7 @@ import {
   ESplitType,
   IExpense,
   IGroup,
+  IOcrResultData,
   TExpenseInput,
 } from "@/types";
 import InputField from "@/components/forms/InputField";
@@ -33,6 +34,7 @@ export interface IExpenseFormProps {
   loading?: boolean;
   group: IGroup;
   expense?: IExpense;
+  initialData?: IOcrResultData;
   additionalAction?: ReactNode;
   onSubmit: (input: TExpenseInput) => void;
 }
@@ -41,6 +43,7 @@ export default function ExpenseForm({
   loading,
   group,
   expense,
+  initialData,
   additionalAction,
   onSubmit,
 }: IExpenseFormProps) {
@@ -50,34 +53,54 @@ export default function ExpenseForm({
   const categories = values(EExpenseCategory);
   const splitTypes = values(ESplitType);
 
+  const getDefaultValues = (): Partial<TExpenseInput> => {
+    if (expense) {
+      return {
+        ...pick(expense, [
+          "description",
+          "splitType",
+          "discountType",
+          "category",
+          "amount",
+          "date",
+          "paidByShares",
+          "paidForShares",
+        ]),
+        discountType: expense.discountType,
+        date: new Date(expense.date),
+      };
+    }
+
+    const defaults: Partial<TExpenseInput> = {
+      splitType: ESplitType.Equal,
+      discountType: EDiscountType.Percentage,
+      category: EExpenseCategory.Food,
+      date: new Date(),
+      groupId: group?.id,
+      paidForShares: [],
+      amount: 0,
+      discount: 0,
+    };
+
+    if (initialData) {
+      return {
+        ...defaults,
+        description: initialData.description,
+        amount: initialData.amount,
+        category: initialData.category,
+        date: initialData.date ? new Date(initialData.date) : new Date(),
+      };
+    }
+
+    return defaults;
+  };
+
   const form = useForm<TExpenseInput>({
     resolver: zodResolver(ExpenseValidation),
-    defaultValues: expense
-      ? {
-          ...pick(expense, [
-            "description",
-            "splitType",
-            "discountType",
-            "category",
-            "amount",
-            "date",
-            "paidByShares",
-            "paidForShares",
-          ]),
-          discountType: expense.discountType,
-          date: new Date(expense.date),
-        }
-      : {
-          splitType: ESplitType.Equal,
-          discountType: EDiscountType.Percentage,
-          category: EExpenseCategory.Food,
-          date: new Date(),
-          groupId: group?.id,
-          paidForShares: [],
-          amount: 0,
-          discount: 0,
-        },
+    defaultValues: getDefaultValues(),
   });
+
+  const hasOcrData = !!initialData && !expense;
   const formValues = form.watch();
 
   const splitType = form.watch("splitType");
@@ -357,7 +380,7 @@ export default function ExpenseForm({
             <Button
               style={styles.saveButton}
               onPress={form.handleSubmit(onSubmit)}
-              disabled={loading || !form.formState.isDirty}
+              disabled={loading || (!form.formState.isDirty && !hasOcrData)}
             >
               {expense ? "Update Expense" : "Create Expense"}
             </Button>

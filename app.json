@@ -2,7 +2,7 @@
   "expo": {
     "name": "Expense Tracker App",
     "slug": "expense-tracker-app",
-    "version": "1.0.16",
+    "version": "1.0.17",
     "orientation": "portrait",
     "icon": "./assets/images/playstore.png",
     "scheme": "expensetrackerapp",
@@ -56,7 +56,7 @@
           ]
         }
       ],
-      "versionCode": 16
+      "versionCode": 17
     },
     "web": {
       "bundler": "metro",
