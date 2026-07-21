@@ -1,7 +1,7 @@
 {
   "name": "expense-tracker-app",
   "main": "expo-router/entry",
-  "version": "1.0.17",
+  "version": "1.0.19",
   "scripts": {
     "start": "expo start",
     "android": "expo run:android",
@@ -11,7 +11,7 @@
     "clean": "cd android && ./gradlew clean",
     "assembleDebug": "cd android && ./gradlew assembleDebug",
     "assembleRelease": "cd android && ./gradlew assembleRelease",
-    "aab": "npx react-native build-android --mode=release"
+    "aab": "EXPO_PUBLIC_API_BASE_URL=https://expense-tracker-api.hiramis.org npx react-native build-android --mode=release"
   },
   "jest": {
     "preset": "jest-expo"
